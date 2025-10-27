@@ -46,6 +46,13 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->namespace($this->namespace)
                 ->group(base_path('routes/web.php'));
+            
+            // Load Marvel package storage routes
+            if (file_exists(base_path('packages/marvel/routes/storage.php'))) {
+                Route::prefix('api')
+                    ->middleware('api')
+                    ->group(base_path('packages/marvel/routes/storage.php'));
+            }
         });
     }
 

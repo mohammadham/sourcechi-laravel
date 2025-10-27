@@ -21,11 +21,45 @@ class Attachment extends Model implements HasMedia
 
     public $guarded = [];
 
+    protected $casts = [
+        'storage_metadata' => 'json',
+    ];
+
+    protected $fillable = [
+        'storage_driver',
+        'storage_metadata',
+        'file_type',
+    ];
+
     public function registerMediaConversions(Media $media = null): void
     {
         $this->addMediaConversion('thumbnail')
             ->width(368)
             ->height(232)
             ->nonQueued();
+    }
+
+    /**
+     * Get storage driver name
+     */
+    public function getStorageDriver(): string
+    {
+        return $this->storage_driver ?? 'local';
+    }
+
+    /**
+     * Get storage metadata
+     */
+    public function getStorageMetadata(): array
+    {
+        return $this->storage_metadata ?? [];
+    }
+
+    /**
+     * Get file type
+     */
+    public function getFileType(): string
+    {
+        return $this->file_type ?? 'image';
     }
 }

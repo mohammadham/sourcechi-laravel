@@ -132,11 +132,66 @@ return [
     ],
 
     'zarinpal' => [
-        'merchant_id' => env('ZARINPAL_MERCHANT_ID', 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX'),
+        'merchant_id' => env('ZARINPAL_MERCHANT_ID'),
         'sandbox' => env('ZARINPAL_SANDBOX', true),
-        'callback_url' => env('ZARINPAL_CALLBACK_URL', env('APP_URL') . '/zarinpal/callback'),
+        'callback_url' => env('ZARINPAL_CALLBACK_URL'),
         'use_toman' => env('ZARINPAL_USE_TOMAN', false),
-        'description' => env('ZARINPAL_PAYMENT_DESCRIPTION', 'پرداخت سفارش'),
+        'description' => env('ZARINPAL_PAYMENT_DESCRIPTION', 'پرداخت سفارش #{order_id}'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Storage Drivers Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure storage drivers for file uploads (images, videos, digital files)
+    |
+    */
+    'storage' => [
+        'default_driver' => env('STORAGE_DEFAULT_DRIVER', 'local'),
+        
+        'type_mapping' => [
+            'image' => env('STORAGE_IMAGE_DRIVER', 'local'),
+            'video' => env('STORAGE_VIDEO_DRIVER', 'local'),
+            'digital_file' => env('STORAGE_DIGITAL_FILE_DRIVER', 'local'),
+            'document' => env('STORAGE_DOCUMENT_DRIVER', 'local'),
+        ],
+
+        'drivers' => [
+            'local' => [
+                'enabled' => true,
+            ],
+
+            'telegram' => [
+                'enabled' => env('TELEGRAM_STORAGE_ENABLED', false),
+                'api_id' => env('TELEGRAM_API_ID'),
+                'api_hash' => env('TELEGRAM_API_hash'),
+                'phone' => env('TELEGRAM_PHONE'),
+                'channel_id' => env('TELEGRAM_CHANNEL_ID'),
+            ],
+
+            'google_drive' => [
+                'enabled' => env('GOOGLE_DRIVE_ENABLED', false),
+                'client_id' => env('GOOGLE_DRIVE_CLIENT_ID'),
+                'client_secret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
+                'refresh_token' => env('GOOGLE_DRIVE_REFRESH_TOKEN'),
+                'folder_id' => env('GOOGLE_DRIVE_FOLDER_ID', 'root'),
+                'redirect_uri' => env('GOOGLE_DRIVE_REDIRECT_URI'),
+            ],
+
+            'ftp' => [
+                'enabled' => env('FTP_STORAGE_ENABLED', false),
+                'host' => env('FTP_HOST'),
+                'username' => env('FTP_USERNAME'),
+                'password' => env('FTP_PASSWORD'),
+                'port' => env('FTP_PORT', 21),
+                'root' => env('FTP_ROOT', '/'),
+                'ssl' => env('FTP_SSL', false),
+                'timeout' => env('FTP_TIMEOUT', 30),
+                'passive' => env('FTP_PASSIVE', true),
+                'base_url' => env('FTP_BASE_URL'),
+            ],
+        ],
     ],
 
     'openai' => [

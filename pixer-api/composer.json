@@ -24,7 +24,10 @@
         "stevebauman/purify": "6.0.2",
         "symfony/http-client": "6.3.7",
         "symfony/mailgun-mailer": "6.3.6",
-        "kingflamez/laravelrave": "dev-master"
+        "kingflamez/laravelrave": "dev-master",
+        "danog/madelineproto": "^8.0",
+        "google/apiclient": "^2.15",
+        "league/flysystem-ftp": "^3.0"
     },
     "require-dev": {
         "fakerphp/faker": "1.21.0",
