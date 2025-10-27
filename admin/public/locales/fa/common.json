@@ -552,5 +552,19 @@
   "text-image-uploading-message": "Please wait! Image is uploading",
   "text-quote-title": "Quote",
   "text-transfer-shop-ownership-status": "Transfer shop ownership.",
-  "text-pixel-dot": "pixel."
+  "text-pixel-dot": "pixel.",
+  "text-zarinpal": "زرین‌پال",
+  "text-zarinpal-description": "درگاه پرداخت امن زرین‌پال",
+  "text-zarinpal-iran": "درگاه پرداخت ایرانی",
+  "form-label-zarinpal-merchant-id": "شناسه پذیرنده (Merchant ID)",
+  "form-label-zarinpal-sandbox": "حالت تست (Sandbox)",
+  "form-label-zarinpal-use-toman": "استفاده از تومان به جای ریال",
+  "form-label-zarinpal-callback-url": "آدرس بازگشت پرداخت",
+  "form-label-zarinpal-description": "توضیحات پرداخت",
+  "error-zarinpal-payment-failed": "پرداخت از طریق زرین‌پال ناموفق بود",
+  "error-zarinpal-connection": "خطا در اتصال به درگاه زرین‌پال",
+  "error-zarinpal-merchant-invalid": "شناسه پذیرنده نامعتبر است",
+  "success-zarinpal-payment": "پرداخت با موفقیت از طریق زرین‌پال انجام شد",
+  "text-zarinpal-ref-id": "شماره مرجع تراکنش",
+  "text-redirecting-to-zarinpal": "در حال انتقال به درگاه زرین‌پال..."
 }

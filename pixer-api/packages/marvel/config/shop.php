@@ -131,6 +131,14 @@ return [
         'secret_hash' => env('FLW_SECRET_HASH'),
     ],
 
+    'zarinpal' => [
+        'merchant_id' => env('ZARINPAL_MERCHANT_ID', 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX'),
+        'sandbox' => env('ZARINPAL_SANDBOX', true),
+        'callback_url' => env('ZARINPAL_CALLBACK_URL', env('APP_URL') . '/zarinpal/callback'),
+        'use_toman' => env('ZARINPAL_USE_TOMAN', false),
+        'description' => env('ZARINPAL_PAYMENT_DESCRIPTION', 'پرداخت سفارش'),
+    ],
+
     'openai' => [
         'secret_Key' => env('OPENAI_SECRET_KEY'),
     ],

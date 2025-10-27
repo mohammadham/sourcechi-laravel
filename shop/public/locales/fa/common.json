@@ -296,7 +296,7 @@
   "text-payment-method": "روش پرداخت",
   "text-remove-item-from-cart-message": "Successfully remove from the cart!",
   "payment-confirmed": "Payment Confirmed! Click On Place Order",
-  "text-payment-successful": "Payment successfully done",
+  "text-payment-successful": "پرداخت با موفقیت انجام شد",
   "text-card-expiry": "Expiration date",
   "text-card-cvc": "CVC",
   "text-payment-title": "Pay your payment",
@@ -350,5 +350,12 @@
   "text-maintenance-mode-title": "Maintenance Mode Begins In",
   "error-email-required": "Email is required.",
   "text-news": "NEWS",
-  "text-commission": "Commission"
+  "text-commission": "Commission",
+  "button-pay-with-zarinpal": "پرداخت با زرین‌پال",
+  "text-zarinpal": "زرین‌پال",
+  "text-redirecting-to-zarinpal": "در حال انتقال به درگاه زرین‌پال...",
+  "text-payment-verification": "در حال تأیید پرداخت...",
+  "text-payment-failed": "پرداخت ناموفق بود",
+  "text-zarinpal-ref-id": "شماره مرجع",
+  "error-zarinpal-payment": "خطا در پرداخت از طریق زرین‌پال"
 }
