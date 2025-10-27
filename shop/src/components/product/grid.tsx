@@ -9,6 +9,7 @@ import ItemNotFound from '@/components/ui/item-not-found';
 import rangeMap from '@/lib/range-map';
 import { staggerTransition } from '@/lib/framer-motion/stagger-transition';
 import { useTranslation } from 'next-i18next';
+import AdBanner from '@/components/advertisements/ad-banner';
 
 interface GridProps {
   products: Product[];
@@ -56,8 +57,16 @@ export default function Grid({
           ? rangeMap(limit, (i) => (
               <ProductCardLoader key={i} uniqueKey={`product-${i}`} />
             ))
-          : products.map((product) => (
-              <Card key={product.id} product={product} />
+          : products.map((product, index) => (
+              <>
+                <Card key={product.id} product={product} />
+                {/* Show ad after every 6 products */}
+                {(index + 1) % 6 === 0 && (
+                  <div className="col-span-full">
+                    <AdBanner position="between_products" />
+                  </div>
+                )}
+              </>
             ))}
       </motion.div>
 

@@ -16,6 +16,8 @@ export const Routes = {
   companyInformation: '/settings/company-information',
   maintenance: '/settings/maintenance',
   promotionPopup: '/settings/promotion-popup',
+  enamadSettings: '/settings/enamad',
+  storageSettings: '/settings/storage',
   storeSettings: '/vendor/settings',
   storeKeepers: '/vendor/store_keepers',
   profileUpdate: '/profile-update',

@@ -15,6 +15,7 @@ import DrawersContainer from '@/components/drawer-views/container';
 import SearchView from '@/components/search/search-view';
 import DefaultSeo from '@/layouts/_default-seo';
 import { SearchProvider } from '@/components/search/search.context';
+import AdPopup from '@/components/advertisements/ad-popup';
 
 // base css file
 import '@/assets/css/scrollbar.css';
@@ -75,6 +76,7 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
                     <SearchView />
                     <ModalsContainer />
                     <DrawersContainer />
+                    <AdPopup />
                     <Toaster containerClassName="!top-16 sm:!top-3.5 !bottom-16 sm:!bottom-3.5" />
                   </>
                 </AnimatePresence>

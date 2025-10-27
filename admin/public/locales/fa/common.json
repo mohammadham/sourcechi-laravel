@@ -566,5 +566,7 @@
   "error-zarinpal-merchant-invalid": "شناسه پذیرنده نامعتبر است",
   "success-zarinpal-payment": "پرداخت با موفقیت از طریق زرین‌پال انجام شد",
   "text-zarinpal-ref-id": "شماره مرجع تراکنش",
-  "text-redirecting-to-zarinpal": "در حال انتقال به درگاه زرین‌پال..."
+  "text-redirecting-to-zarinpal": "در حال انتقال به درگاه زرین‌پال...",
+  "text-enamad-settings": "تنظیمات اینماد",
+  "text-storage-settings": "تنظیمات ذخیره‌سازی"
 }

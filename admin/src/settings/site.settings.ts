@@ -377,6 +377,16 @@ export const siteSettings = {
                 label: 'text-popup-settings',
                 icon: 'InformationIcon',
               },
+              {
+                href: Routes?.enamadSettings,
+                label: 'text-enamad-settings',
+                icon: 'InformationIcon',
+              },
+              {
+                href: Routes?.storageSettings,
+                label: 'text-storage-settings',
+                icon: 'InformationIcon',
+              },
             ],
           },
         ],
