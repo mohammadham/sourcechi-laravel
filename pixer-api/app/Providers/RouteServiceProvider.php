@@ -53,6 +53,13 @@ class RouteServiceProvider extends ServiceProvider
                     ->middleware('api')
                     ->group(base_path('packages/marvel/routes/storage.php'));
             }
+            
+            // Load Marvel package advertisement routes
+            if (file_exists(base_path('packages/marvel/routes/advertisements.php'))) {
+                Route::prefix('api')
+                    ->middleware('api')
+                    ->group(base_path('packages/marvel/routes/advertisements.php'));
+            }
         });
     }
 
