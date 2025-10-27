@@ -12,6 +12,7 @@ import { LongArrowIcon } from '@/components/icons/long-arrow-icon';
 import routes from '@/config/routes';
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
+import AdBanner from '@/components/advertisements/ad-banner';
 import {
   fadeInBottom,
   fadeInBottomWithScaleX,
@@ -136,6 +137,10 @@ const Single: React.FC<SingleProps> = ({ product }) => {
                 className="flex-shrink-0 pb-6 pt-2.5 lg:min-w-[350px] lg:max-w-[470px] lg:pb-0"
               />
             </div>
+            
+            {/* Advertisement Banner - Product Detail */}
+            <AdBanner position="product_detail" className="my-6" />
+            
             <div className="mt-4 w-full md:mt-8 md:space-y-10 lg:mt-12 lg:flex lg:flex-col lg:space-y-12">
               <AverageRatings
                 ratingCount={rating_count}

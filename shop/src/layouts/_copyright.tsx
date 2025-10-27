@@ -3,12 +3,16 @@ import routes from '@/config/routes';
 import { useSettings } from '@/data/settings';
 import cn from 'classnames';
 import EnamadBadge from '@/components/enamad/enamad-badge';
+import AdBanner from '@/components/advertisements/ad-banner';
 
 export default function Copyright({ className }: { className?: string }) {
   const currentYear = new Date().getFullYear();
   const { settings } = useSettings();
   return (
     <div className={cn('flex flex-col items-center justify-center gap-4', className)}>
+      {/* Advertisement Banner - Footer */}
+      <AdBanner position="footer" />
+      
       <EnamadBadge location="footer" className="mb-3" />
       <span className="tracking-[0.2px] text-center">
         ©{currentYear}{' '}

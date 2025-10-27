@@ -140,6 +140,9 @@ export const Routes = {
   ownerDashboardMyShop: '/my-shop',
   myProductsInFlashSale: '/flash-sale/my-products',
   ownerDashboardNotifyLogs: '/notify-logs',
+  advertisement: {
+    ...routesFactory('/advertisements'),
+  },
   inventory: {
     editWithoutLang: (slug: string, shop?: string) => {
       return shop ? `/${shop}/products/${slug}/edit` : `/products/${slug}/edit`;

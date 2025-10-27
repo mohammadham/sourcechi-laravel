@@ -13,6 +13,7 @@ import Logo from '@/components/ui/logo';
 import Scrollbar from '@/components/ui/scrollbar';
 import routes from '@/config/routes';
 import Copyright from '@/layouts/_copyright';
+import AdBanner from '@/components/advertisements/ad-banner';
 import cn from 'classnames';
 import { useTranslation } from 'next-i18next';
 import { useWindowSize } from 'react-use';
@@ -151,6 +152,11 @@ export function Sidebar({
               icon={<HelpIcon className="h-[18px] w-[18px] text-current" />}
             />
           </nav>
+        </div>
+        
+        {/* Advertisement Banner - Sidebar */}
+        <div className="px-4 py-4">
+          <AdBanner position="sidebar" />
         </div>
       </Scrollbar>
 

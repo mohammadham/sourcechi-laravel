@@ -11,6 +11,7 @@ import Logo from '@/components/ui/logo';
 import ThemeSwitcher from '@/components/ui/theme-switcher';
 import routes from '@/config/routes';
 import { useSettings } from '@/data/settings';
+import AdBanner from '@/components/advertisements/ad-banner';
 import {
   RESPONSIVE_WIDTH,
   checkIsMaintenanceModeComing,
@@ -101,6 +102,9 @@ export default function Header({
           <LoginMenu />
         </div>
       </header>
+      
+      {/* Advertisement Banner - Header */}
+      <AdBanner position="header" />
     </>
   );
 }
