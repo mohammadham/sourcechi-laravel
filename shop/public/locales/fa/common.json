@@ -357,5 +357,7 @@
   "text-payment-verification": "در حال تأیید پرداخت...",
   "text-payment-failed": "پرداخت ناموفق بود",
   "text-zarinpal-ref-id": "شماره مرجع",
-  "error-zarinpal-payment": "خطا در پرداخت از طریق زرین‌پال"
+  "error-zarinpal-payment": "خطا در پرداخت از طریق زرین‌پال",
+  "text-enamad": "اینماد",
+  "text-enamad-trust-symbol": "نماد اعتماد الکترونیکی"
 }
