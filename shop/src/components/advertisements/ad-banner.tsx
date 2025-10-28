@@ -86,8 +86,8 @@ export default function AdBanner({ position, className }: AdBannerProps) {
             <img
               src={currentAd.media_url}
               alt={currentAd.title}
-              className=\"w-full h-auto object-contain\"
-              loading=\"lazy\"
+              className="w-full h-auto object-contain"
+              loading="lazy"
             />
           </div>
         );
@@ -102,15 +102,15 @@ export default function AdBanner({ position, className }: AdBannerProps) {
               muted
               loop
               playsInline
-              className=\"w-full h-auto object-contain\"
+              className="w-full h-auto object-contain"
             >
               Your browser does not support the video tag.
             </video>
             {currentAd.target_url && (
               <div
-                className=\"absolute inset-0 cursor-pointer\"
+                className="absolute inset-0 cursor-pointer"
                 onClick={handleClick}
-                role=\"button\"
+                role="button"
                 tabIndex={0}
               />
             )}
@@ -146,7 +146,7 @@ export default function AdBanner({ position, className }: AdBannerProps) {
       
       {/* Indicators for multiple ads */}
       {ads.length > 1 && (
-        <div className=\"flex justify-center gap-2 mt-2\">
+        <div className="flex justify-center gap-2 mt-2">
           {ads.map((_, index) => (
             <button
               key={index}

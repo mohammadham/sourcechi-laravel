@@ -1,4 +1,4 @@
-import { useSettings } from '@/framework/settings';
+import { useSettings } from '@/data/settings';
 
 interface EnamadBadgeProps {
   className?: string;

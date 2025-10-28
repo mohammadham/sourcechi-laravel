@@ -23,15 +23,23 @@ export const getStaticPaths: GetStaticPaths<ParsedQueryParams> = async ({
   locales,
 }) => {
   invariant(locales, 'locales is not defined');
-  const { data } = await client.tags.all({ limit: 100 });
-
-  const paths = data?.flatMap((tag) =>
-    locales?.map((locale) => ({ params: { tagSlug: tag.slug }, locale }))
-  );
-  return {
-    paths,
-    fallback: 'blocking',
-  };
+  
+  try {
+    const { data } = await client.tags.all({ limit: 100 });
+    const paths = data?.flatMap((tag) =>
+      locales?.map((locale) => ({ params: { tagSlug: tag.slug }, locale }))
+    );
+    return {
+      paths: paths || [],
+      fallback: 'blocking',
+    };
+  } catch (error) {
+    console.warn('Failed to fetch tags during build:', error);
+    return {
+      paths: [],
+      fallback: 'blocking',
+    };
+  }
 };
 
 type PageProps = {
