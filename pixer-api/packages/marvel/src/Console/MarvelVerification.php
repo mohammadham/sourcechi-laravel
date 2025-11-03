@@ -66,6 +66,25 @@ class MarvelVerification implements JsonSerializable
 
     public function verify(string $code): MarvelVerification
     {
+            $url = "https://customer.redq.io/api/sale/verify";
+
+        $code = trim($code);
+
+        // if (!preg_match("/^([a-f0-9]{8})-(([a-f0-9]{4})-){3}([a-f0-9]{12})$/i", $code)) {
+        //     $this->mapConfigToProperties(['p_key' => $code]);
+        //     return $this;
+        // }
+
+        $response = Http::post($url, [
+            "k" => $code,
+            "i" => 36383345,
+            "n" => "Pixer - React Laravel Ecommerce Multivendor Digital Marketplace",
+            "v" => config('shop.version'),
+            "u" => url('/'),
+        ]);
+
+        $responseBody = $response->json();
+    
         $this->pkey = $code;
         $this->trust = true;
         $this->domains = [];
