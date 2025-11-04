@@ -5,6 +5,7 @@ import { USFlag } from '@/components/icons/flags/USFlag';
 import { DEFlag } from '@/components/icons/flags/DEFlag';
 import { ILFlag } from '@/components/icons/flags/ILFlag';
 import { ESFlag } from '@/components/icons/flags/ESFlag';
+import { IRFlag } from '@/components/icons/flags/IRFlag';
 
 import { SAFlagRound } from '@/components/icons/flags/SAFlagRound';
 import { CNFlagRound } from '@/components/icons/flags/CNFlagRound';
@@ -12,8 +13,9 @@ import { DEFlagRound } from '@/components/icons/flags/DEFlagRound';
 import { ESFlagRound } from '@/components/icons/flags/ESFlagRound';
 import { USFlagRound } from '@/components/icons/flags/USFlagRound';
 import { ILFlagRound } from '@/components/icons/flags/ILFlagRound';
+import { IRFlagRound } from '@/components/icons/flags/IRFlagRound';
 
-const localeRTLList = ['ar', 'he'];
+const localeRTLList = ['ar', 'he','fa'];
 export function useIsRTL() {
   const { locale } = useRouter();
   if (locale && localeRTLList.includes(locale)) {
@@ -29,6 +31,13 @@ export let languageMenu = [
     value: 'ar',
     icon: <SAFlag width="20px" height="15px" />,
     iconMobile: <SAFlagRound />,
+  },
+    {
+    id: 'fa',
+    name: 'فارسی',
+    value: 'fa',
+    icon: <IRFlag width="20px" height="15px" />,
+    iconMobile: <IRFlagRound />,
   },
   {
     id: 'zh',

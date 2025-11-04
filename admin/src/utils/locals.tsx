@@ -5,8 +5,9 @@ import { USFlag } from '@/components/icons/flags/USFlag';
 import { DEFlag } from '@/components/icons/flags/DEFlag';
 import { ILFlag } from '@/components/icons/flags/ILFlag';
 import { ESFlag } from '@/components/icons/flags/ESFlag';
+import { IRFlag } from '@/components/icons/flags/IRFlag';
 
-const localeRTLList = ['ar', 'he'];
+const localeRTLList = ['ar', 'he','fa'];
 export function useIsRTL() {
   const { locale } = useRouter();
   if (locale && localeRTLList.includes(locale)) {
@@ -21,6 +22,12 @@ export let languageMenu = [
     name: 'عربى',
     value: 'ar',
     icon: <SAFlag width="28px" height="28px" />,
+  },
+    {
+    id: 'fa',
+    name: 'فارسی',
+    value: 'fa',
+    icon: <IRFlag width="28px" height="28px" />,
   },
   {
     id: 'zh',
