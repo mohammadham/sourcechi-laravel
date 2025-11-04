@@ -1,16 +1,12 @@
 export const IRFlag = ({ width = '640px', height = '480px' }) => {
   return (
-    <svg  xmlns:x="&ns_extend;" xmlns:i="&ns_ai;" xmlns:graph="&ns_graphs;"
-	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="482 846.5 300 172"
-	 enable-background="new 482 846.5 300 172" xml:space="preserve"
+    <svg  
+	 xmlns="http://www.w3.org/2000/svg"  
+	viewBox="482 846.5 300 172"
     width={width}
     height={height}
       >
       <switch>
-        <foreignObject requiredExtensions="&ns_ai;" x="0" y="0" width="1" height="1">
-          <i:pgfRef  xlink:href="#adobe_illustrator_pgf">
-          </i:pgfRef>
-        </foreignObject>
         <g i:extraneous="self">
           <g>
             <rect id="_x35_1" x="482" y="846.5" fill="#239F40" width="300" height="172"/>
