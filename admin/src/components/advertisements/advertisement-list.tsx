@@ -6,7 +6,7 @@ import { Advertisement } from '@/data/advertisements';
 import Badge from '@/components/ui/badge/badge';
 import { Routes } from '@/config/routes';
 import { useToggleAdvertisementStatusMutation } from '@/data/advertisements';
-import { SwitchInput } from '@/components/ui/switch-input';
+import SwitchInput from '@/components/ui/switch-input';
 import { useMemo, useState } from 'react';
 
 export type IProps = {

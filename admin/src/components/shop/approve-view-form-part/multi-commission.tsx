@@ -5,7 +5,7 @@ import {
   MultiCommissionProps,
 } from '@/components/shop/approve-shop';
 //@ts-ignore
-import { approveShopWithCommissionSchema } from '@/components/shop/shop-validation-schema';
+import { approveShopSchema } from '@/components/shop/shop-validation-schema';
 import Button from '@/components/ui/button';
 import { Form } from '@/components/ui/form/form';
 import Input from '@/components/ui/input';
@@ -68,7 +68,7 @@ const MultiCommission = ({
       </div>
 
       <Form<FormValues>
-        validationSchema={approveShopWithCommissionSchema}
+        validationSchema={approveShopSchema}
         onSubmit={onSubmit}
         options={{
           shouldUnregister: true,
