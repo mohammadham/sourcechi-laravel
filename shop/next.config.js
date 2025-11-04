@@ -20,6 +20,8 @@ module.exports = {
       's3.amazonaws.com',
       'pixarlaravel.s3.ap-southeast-1.amazonaws.com',
       'pickbazarlaravel.s3.ap-southeast-1.amazonaws.com',
+      'srcchi.top',
+      'srcchi.ir',
     ],
   },
   ...(process.env.APPLICATION_MODE === 'production' && {

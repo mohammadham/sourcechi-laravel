@@ -16,6 +16,7 @@ import { PaymongoIcon } from '@/components/icons/payment-gateways/paymongo';
 import { FlutterwaveIcon } from '@/components/icons/payment-gateways/flutterwave';
 import BitpayIcon from '@/components/icons/payment-gateways/bitpay';
 import CoinbaseIcon from '@/components/icons/payment-gateways/coinbase';
+import { ZarinpalIcon } from '@/components/icons/payment-gateways/zarinpal';
 
 interface PaymentSelectProps {
   options: OptionType[];
@@ -57,6 +58,7 @@ const PaymentMethodCard = ({
     flutterwave: <FlutterwaveIcon />,
     bitpay: <BitpayIcon />,
     coinbase: <CoinbaseIcon />,
+    zarinpal: <ZarinpalIcon />,
   };
   return (
     <label
