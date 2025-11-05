@@ -14,13 +14,15 @@ const schema = yup.object().shape({
   token: yup.string().required('form:error-token-required'),
 });
 
+type FormValues = yup.InferType<typeof schema>;
+
 const EnterTokenView = ({ onSubmit, loading }: Props) => {
   const { t } = useTranslation();
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<{ token: string }>({ resolver: yupResolver(schema) });
+  } = useForm<FormValues>({ resolver: yupResolver(schema) });
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>

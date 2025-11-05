@@ -17,6 +17,8 @@ const schema = yup.object().shape({
     .required('form:error-email-required'),
 });
 
+type FormValues = yup.InferType<typeof schema>;
+
 const EnterEmailView = ({ onSubmit, loading }: Props) => {
   const { t } = useTranslation();
   const {
@@ -24,7 +26,7 @@ const EnterEmailView = ({ onSubmit, loading }: Props) => {
     handleSubmit,
 
     formState: { errors },
-  } = useForm<{ email: string }>({ resolver: yupResolver(schema) });
+  } = useForm<FormValues>({ resolver: yupResolver(schema) });
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>

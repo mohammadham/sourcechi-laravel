@@ -20,13 +20,17 @@ export const advertisementValidationSchema = yup.object().shape({
       'form:error-invalid-position'
     )
     .required('form:error-position-required'),
-  media: yup.mixed().when('type', {
-    is: (type: string) => type === 'image' || type === 'video',
-    then: yup.mixed().nullable(),
+  media: yup.mixed().when('type', ([type], schema) => {
+    if (type === 'image' || type === 'video') {
+      return schema.nullable();
+    }
+    return schema;
   }),
-  html_code: yup.string().when('type', {
-    is: 'html',
-    then: yup.string().required('form:error-html-code-required'),
+  html_code: yup.string().when('type', ([type], schema) => {
+    if (type === 'html') {
+      return schema.required('form:error-html-code-required');
+    }
+    return schema;
   }),
   target_url: yup.string().url('form:error-invalid-url').nullable(),
   open_in_new_tab: yup.boolean(),

@@ -72,6 +72,7 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
         name={name}
         render={({ field }) => {
           return (
+            // @ts-ignore
             <DatePicker
               {...field}
               minDate={minDate}

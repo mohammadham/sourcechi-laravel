@@ -14,13 +14,15 @@ const schema = yup.object().shape({
   password: yup.string().required('form:error-password-required'),
 });
 
+type FormValues = yup.InferType<typeof schema>;
+
 const EnterNewPasswordView = ({ onSubmit, loading }: Props) => {
   const { t } = useTranslation();
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<{ password: string }>({ resolver: yupResolver(schema) });
+  } = useForm<FormValues>({ resolver: yupResolver(schema) });
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>

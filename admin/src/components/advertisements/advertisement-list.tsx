@@ -6,7 +6,7 @@ import { Advertisement } from '@/data/advertisements';
 import Badge from '@/components/ui/badge/badge';
 import { Routes } from '@/config/routes';
 import { useToggleAdvertisementStatusMutation } from '@/data/advertisements';
-import SwitchInput from '@/components/ui/switch-input';
+import { Switch } from '@headlessui/react';
 import { useMemo, useState } from 'react';
 
 export type IProps = {
@@ -83,11 +83,21 @@ const AdvertisementList = ({ advertisements, paginatorInfo, onPagination }: IPro
         align: 'center',
         width: 120,
         render: (is_active: boolean, record: Advertisement) => (
-          <SwitchInput
-            name={`is_active_${record.id}`}
+          <Switch
             checked={is_active}
             onChange={() => toggleStatus(record.id)}
-          />
+            className={`${
+              is_active ? 'bg-accent' : 'bg-gray-300'
+            } relative inline-flex h-6 w-11 items-center rounded-full focus:outline-none`}
+            dir="ltr"
+          >
+            <span className="sr-only">Toggle status</span>
+            <span
+              className={`${
+                is_active ? 'translate-x-6' : 'translate-x-1'
+              } inline-block h-4 w-4 transform rounded-full bg-white transition`}
+            />
+          </Switch>
         ),
       },
       {
@@ -98,7 +108,7 @@ const AdvertisementList = ({ advertisements, paginatorInfo, onPagination }: IPro
         width: 120,
         render: (id: number) => (
           <ActionButtons
-            id={id}
+            id={String(id)}
             editUrl={`${Routes.advertisement.list}/${id}/edit`}
             deleteModalView="DELETE_ADVERTISEMENT"
           />

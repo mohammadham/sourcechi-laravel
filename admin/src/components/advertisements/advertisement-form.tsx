@@ -16,18 +16,9 @@ import FileInput from '@/components/ui/file-input';
 import { usePositionDimensionsQuery } from '@/data/advertisements';
 import Alert from '@/components/ui/alert';
 import SwitchInput from '@/components/ui/switch-input';
+import * as yup from 'yup';
 
-type FormValues = {
-  title: string;
-  type: 'image' | 'video' | 'html';
-  position: string;
-  media?: File | null;
-  html_code?: string;
-  target_url?: string;
-  open_in_new_tab: boolean;
-  is_active: boolean;
-  order: number;
-};
+type FormValues = yup.InferType<typeof advertisementValidationSchema>;
 
 type IProps = {
   initialValues?: Advertisement | null;
@@ -67,7 +58,8 @@ export default function AdvertisementForm({ initialValues, onSubmit, loading }: 
       target_url: initialValues?.target_url || '',
       open_in_new_tab: initialValues?.open_in_new_tab ?? true,
       is_active: initialValues?.is_active ?? true,
-      order: initialValues?.order || 0,
+      order: initialValues?.order ?? 0,
+      display_settings: null,
     },
   });
 
@@ -93,35 +85,35 @@ export default function AdvertisementForm({ initialValues, onSubmit, loading }: 
 
   const getDimensionInfo = () => {
     if (!dimensionsData || !selectedPosition) return null;
-    const info = dimensionsData[selectedPosition];
+    const info = (dimensionsData as any)[selectedPosition];
     if (!info) return null;
 
     return (
       <Alert
-        message={
-          <div>
-            <p className="font-semibold mb-2">{info.description}</p>
-            <p className="mb-2">
-              <strong>ابعاد توصیه شده:</strong> {info.recommended.width}x{info.recommended.height} پیکسل
-            </p>
-            {info.alternatives && info.alternatives.length > 0 && (
-              <div>
-                <strong>ابعاد جایگزین:</strong>
-                <ul className="list-disc list-inside mt-1">
-                  {info.alternatives.map((alt: any, index: number) => (
-                    <li key={index}>
-                      {alt.width}x{alt.height} پیکسل
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        }
+        message="راهنمای ابعاد تبلیغ"
         variant="info"
         closeable={false}
         className="mb-5"
-      />
+      >
+        <div>
+          <p className="font-semibold mb-2">{info.description}</p>
+          <p className="mb-2">
+            <strong>ابعاد توصیه شده:</strong> {info.recommended.width}x{info.recommended.height} پیکسل
+          </p>
+          {info.alternatives && info.alternatives.length > 0 && (
+            <div>
+              <strong>ابعاد جایگزین:</strong>
+              <ul className="list-disc list-inside mt-1">
+                {info.alternatives.map((alt: any, index: number) => (
+                  <li key={index}>
+                    {alt.width}x{alt.height} پیکسل
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </Alert>
     );
   };
 
@@ -130,7 +122,7 @@ export default function AdvertisementForm({ initialValues, onSubmit, loading }: 
       title: values.title,
       type: values.type,
       position: values.position,
-      target_url: values.target_url,
+      target_url: values.target_url || undefined,
       open_in_new_tab: values.open_in_new_tab,
       is_active: values.is_active,
       order: values.order,
@@ -139,7 +131,7 @@ export default function AdvertisementForm({ initialValues, onSubmit, loading }: 
     if (values.type === 'html') {
       input.html_code = values.html_code;
     } else if (values.media) {
-      input.media = values.media;
+      input.media = values.media as File;
     }
 
     onSubmit(input);
@@ -202,7 +194,7 @@ export default function AdvertisementForm({ initialValues, onSubmit, loading }: 
                   name="media"
                   control={control}
                   multiple={false}
-                  acceptFile={selectedType === 'image' ? 'image/*' : 'video/*'}
+                  acceptFile={selectedType === 'video'}
                 />
                 <p className="text-xs text-body mt-2">
                   {selectedType === 'image'

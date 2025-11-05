@@ -140,8 +140,8 @@ const Navbar = () => {
         shop?.settings?.isShopUnderMaintenance;
       const checkIsMaintenance =
         beforeDay && shop?.settings?.isShopUnderMaintenance;
-      setUnderMaintenance(checkIsMaintenance as boolean);
-      setUnderMaintenanceStart(checkIsMaintenanceStart as boolean);
+      setUnderMaintenance(Boolean(checkIsMaintenance));
+      setUnderMaintenanceStart(Boolean(checkIsMaintenanceStart));
     }
   }, [
     query?.shop,

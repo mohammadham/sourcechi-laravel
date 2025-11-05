@@ -14,30 +14,40 @@ export const storageValidationSchema = yup.object().shape({
     drivers: yup.object().shape({
       telegram: yup.object().shape({
         enabled: yup.boolean(),
-        api_id: yup.string().when('enabled', {
-          is: true,
-          then: yup.string().required('form:error-telegram-api-id-required'),
+        api_id: yup.string().when('enabled', ([enabled], schema) => {
+          if (enabled === true) {
+            return schema.required('form:error-telegram-api-id-required');
+          }
+          return schema;
         }),
-        api_hash: yup.string().when('enabled', {
-          is: true,
-          then: yup.string().required('form:error-telegram-api-hash-required'),
+        api_hash: yup.string().when('enabled', ([enabled], schema) => {
+          if (enabled === true) {
+            return schema.required('form:error-telegram-api-hash-required');
+          }
+          return schema;
         }),
-        phone: yup.string().when('enabled', {
-          is: true,
-          then: yup.string().required('form:error-telegram-phone-required'),
+        phone: yup.string().when('enabled', ([enabled], schema) => {
+          if (enabled === true) {
+            return schema.required('form:error-telegram-phone-required');
+          }
+          return schema;
         }),
         channel_id: yup.string(),
       }),
       
       google_drive: yup.object().shape({
         enabled: yup.boolean(),
-        client_id: yup.string().when('enabled', {
-          is: true,
-          then: yup.string().required('form:error-google-drive-client-id-required'),
+        client_id: yup.string().when('enabled', ([enabled], schema) => {
+          if (enabled === true) {
+            return schema.required('form:error-google-drive-client-id-required');
+          }
+          return schema;
         }),
-        client_secret: yup.string().when('enabled', {
-          is: true,
-          then: yup.string().required('form:error-google-drive-client-secret-required'),
+        client_secret: yup.string().when('enabled', ([enabled], schema) => {
+          if (enabled === true) {
+            return schema.required('form:error-google-drive-client-secret-required');
+          }
+          return schema;
         }),
         refresh_token: yup.string(),
         folder_id: yup.string(),
@@ -45,17 +55,23 @@ export const storageValidationSchema = yup.object().shape({
       
       ftp: yup.object().shape({
         enabled: yup.boolean(),
-        host: yup.string().when('enabled', {
-          is: true,
-          then: yup.string().required('form:error-ftp-host-required'),
+        host: yup.string().when('enabled', ([enabled], schema) => {
+          if (enabled === true) {
+            return schema.required('form:error-ftp-host-required');
+          }
+          return schema;
         }),
-        username: yup.string().when('enabled', {
-          is: true,
-          then: yup.string().required('form:error-ftp-username-required'),
+        username: yup.string().when('enabled', ([enabled], schema) => {
+          if (enabled === true) {
+            return schema.required('form:error-ftp-username-required');
+          }
+          return schema;
         }),
-        password: yup.string().when('enabled', {
-          is: true,
-          then: yup.string().required('form:error-ftp-password-required'),
+        password: yup.string().when('enabled', ([enabled], schema) => {
+          if (enabled === true) {
+            return schema.required('form:error-ftp-password-required');
+          }
+          return schema;
         }),
         port: yup.number(),
         ssl: yup.boolean(),

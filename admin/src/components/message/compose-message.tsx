@@ -79,6 +79,7 @@ const ComposeMessageModal = () => {
   };
   async function onSubmit() {
     if (shop || !Boolean(active)) {
+      // @ts-ignore
       createConversations({
         // @ts-ignore
         shop_id: shop,

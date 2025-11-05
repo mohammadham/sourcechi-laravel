@@ -9,12 +9,6 @@ import { useTranslation } from 'next-i18next';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 
-interface FormValues {
-  oldPassword: string;
-  newPassword: string;
-  passwordConfirmation: string;
-}
-
 const changePasswordSchema = yup.object().shape({
   oldPassword: yup.string().required('form:error-old-password-required'),
   newPassword: yup.string().required('form:error-password-required'),
@@ -23,6 +17,8 @@ const changePasswordSchema = yup.object().shape({
     .oneOf([yup.ref('newPassword')], 'form:error-match-passwords')
     .required('form:error-confirm-password'),
 });
+
+type FormValues = yup.InferType<typeof changePasswordSchema>;
 
 const ChangePasswordForm = () => {
   const { t } = useTranslation();

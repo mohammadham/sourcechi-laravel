@@ -1120,6 +1120,13 @@ export interface SettingsOptions {
   pushNotification?: PushNotification;
   server_info?: ServerInfo;
   enableEmailForDigitalProduct?: boolean;
+  enamad?: {
+    enabled?: boolean;
+    code?: string;
+    link?: string;
+    displayLocation?: string;
+  };
+  storage?: any;
 }
 
 export interface ContactDetails {
@@ -1425,6 +1432,13 @@ export interface SettingsOptionsInput {
   promoPopup?: PromoPopupFormValues;
   enableReviewPopup?: boolean;
   reviewSystem?: string;
+  enamad?: {
+    enabled?: boolean;
+    code?: string;
+    link?: string;
+    displayLocation?: string;
+  };
+  storage?: any;
 }
 
 export interface SmsEvent {

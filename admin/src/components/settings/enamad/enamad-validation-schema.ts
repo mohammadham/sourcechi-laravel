@@ -3,9 +3,11 @@ import * as yup from 'yup';
 export const enamadValidationSchema = yup.object().shape({
   enamad: yup.object().shape({
     enabled: yup.boolean(),
-    code: yup.string().when('enabled', {
-      is: true,
-      then: yup.string().required('form:error-enamad-code-required'),
+    code: yup.string().when('enabled', ([enabled], schema) => {
+      if (enabled === true) {
+        return schema.required('form:error-enamad-code-required');
+      }
+      return schema;
     }),
     link: yup.string().url('form:error-enamad-link-invalid'),
     displayLocation: yup
