@@ -15,7 +15,7 @@ import ActionButtons from '@/components/common/action-buttons';
 import LanguageListbox from './lang-list-box';
 import { Config } from '@/config';
 import PopOver from '@/components/ui/popover';
-
+import { getShopUrl } from '@/utils/path';
 export type LanguageSwitcherProps = {
   record: any;
   slug: string;
@@ -74,7 +74,7 @@ const LanguageSwitcher = ({
     return autoUpdate(refs.reference.current, refs.floating.current, update);
   }, [refs.reference, refs.floating, update]);
 
-  const preview = `${process.env.NEXT_PUBLIC_SHOP_URL}/products/preview/${slug}`;
+  const preview = getShopUrl(`/products/preview/${slug}`);
 
   return (
     <div className={`flex w-full items-center justify-end gap-3 ${className}`}>

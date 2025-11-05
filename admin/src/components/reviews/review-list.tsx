@@ -18,6 +18,7 @@ import { StarIcon } from '@/components/icons/star-icon';
 import { NoDataFound } from '@/components/icons/no-data-found';
 import { useModalAction } from '@/components/ui/modal/modal.context';
 import Link from 'next/link';
+import { getShopUrl } from '@/utils/path';
 
 export type IProps = {
   reviews: Review[] | undefined;
@@ -106,7 +107,7 @@ const ReviewList = ({
             />
           </div>
           <Link
-            href={`${process.env.NEXT_PUBLIC_SHOP_URL}/products/${product?.slug}`}
+            href={getShopUrl(`/products/${product?.slug}`)}
           >
             <span className="truncate whitespace-nowrap font-medium">
               {product?.name}

@@ -25,6 +25,7 @@ import { LikeIcon } from '@/components/icons/like-icon';
 import { DislikeIcon } from '@/components/icons/dislike-icon';
 import Link from 'next/link';
 import { Routes } from '@/config/routes';
+import { getShopUrl } from '@/utils/path';
 
 export type IProps = {
   questions: Question[] | undefined;
@@ -111,7 +112,7 @@ const QuestionList = ({
             />
           </div>
           <Link
-            href={`${process.env.NEXT_PUBLIC_SHOP_URL}/products/${product?.slug}`}
+            href={getShopUrl(`/products/${product?.slug}`)}
           >
             <span className="truncate whitespace-nowrap font-medium">
               {product?.name}

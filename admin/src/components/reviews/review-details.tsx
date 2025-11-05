@@ -19,7 +19,7 @@ import { LikeIcon } from '@/components/icons/like-icon';
 import { DislikeIcon } from '@/components/icons/dislike-icon';
 import isEmpty from 'lodash/isEmpty';
 import { NoDataFound } from '@/components/icons/no-data-found';
-
+import { getShopUrl } from '@/utils/path';
 type IProps = {
   review: Review | undefined | null;
 };
@@ -144,7 +144,7 @@ const ReviewDetailsView = ({ review }: IProps) => {
 
         <div className="flex flex-col space-y-1.5 pe-4 md:pe-5">
           <Link
-            href={process.env.NEXT_PUBLIC_SHOP_URL + '/products/' + slug}
+            href={getShopUrl( '/products/' + slug)}
             className="text-lg font-semibold text-heading transition-colors hover:text-accent hover:no-underline focus:text-accent-700 focus:no-underline"
           >
             {name}

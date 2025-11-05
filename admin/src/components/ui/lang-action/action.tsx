@@ -7,6 +7,7 @@ import { CheckMarkCircle } from '@/components/icons/checkmark-circle';
 import { CloseFillIcon } from '@/components/icons/close-fill';
 import { useModalAction } from '../modal/modal.context';
 import { useTranslation } from 'react-i18next';
+import { getShopUrl } from '@/utils/path';
 
 export type LanguageSwitcherProps = {
   record: any;
@@ -38,7 +39,7 @@ export default function LanguageSwitcher({
     query: { shop },
   } = useRouter();
 
-  const preview = `${process.env.NEXT_PUBLIC_SHOP_URL}/products/preview/${slug}`;
+  const preview = getShopUrl(`/products/preview/${slug}`);
 
   return (
     <>

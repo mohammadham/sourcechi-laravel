@@ -48,6 +48,7 @@ import { useCallback } from 'react';
 import OpenAIButton from '@/components/openAI/openAI.button';
 import { ItemProps } from '@/types';
 import { formatSlug } from '@/utils/use-slug';
+import { getShopUrl } from '@/utils/path';
 import StickyFooterPanel from '@/components/ui/sticky-footer-panel';
 import Link from '@/components/ui/link';
 import { EyeIcon } from '../icons/category/eyes-icon';
@@ -529,7 +530,7 @@ export default function CreateOrUpdateProductForm({
               <div className="ml-auto">
                 {showPreviewButton && (
                   <Link
-                    href={`${process.env.NEXT_PUBLIC_SHOP_URL}/products/preview/${router.query.productSlug}`}
+                    href={getShopUrl(`/products/preview/${router.query.productSlug}`)}
                     target="_blank"
                     className="inline-flex h-12 flex-shrink-0 items-center justify-center rounded border !border-accent bg-transparent px-5 py-0 text-sm font-semibold leading-none !text-accent outline-none transition duration-300 ease-in-out me-4 hover:border-accent hover:bg-accent hover:!text-white focus:shadow focus:outline-none focus:ring-1 focus:ring-accent-700 md:text-base"
                   >

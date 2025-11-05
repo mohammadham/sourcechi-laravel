@@ -1,3 +1,4 @@
+import { getShopUrl } from '@/utils/path';
 export const Routes = {
   dashboard: '/',
   login: '/login',
@@ -160,7 +161,7 @@ export const Routes = {
         : `/${language}/products/${slug}/translate`;
     },
   },
-  visitStore: (slug: string) => `${process.env.NEXT_PUBLIC_SHOP_URL}/${slug}`,
+  visitStore: (slug: string) => getShopUrl(`/${slug}`),
   vendorRequestForFlashSale: {
     ...routesFactory('/flash-sale/vendor-request'),
   },
