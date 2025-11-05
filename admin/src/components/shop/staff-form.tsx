@@ -13,11 +13,6 @@ import { useAddStaffMutation } from '@/data/staff';
 import { passwordRules } from '@/utils/constants';
 import StickyFooterPanel from '@/components/ui/sticky-footer-panel';
 
-type FormValues = {
-  name: string;
-  email: string;
-  password: string;
-};
 const staffFormSchema = yup.object().shape({
   name: yup.string().required('form:error-name-required'),
   email: yup
@@ -32,6 +27,8 @@ const staffFormSchema = yup.object().shape({
         'Please create a stronger password. hint: Min 8 characters, 1 Upper case letter, 1 Lower case letter, 1 Numeric digit.',
     }),
 });
+
+type FormValues = yup.InferType<typeof staffFormSchema>;
 const AddStaffForm = () => {
   const router = useRouter();
   const {

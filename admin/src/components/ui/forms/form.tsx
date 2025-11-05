@@ -33,7 +33,7 @@ const Form = <TFormValues extends Record<string, any> = Record<string, any>>({
 }: FormProps<TFormValues>) => {
   const methods = useForm<TFormValues>({
     ...useFormProps,
-    ...(validationSchema && { resolver: yupResolver(validationSchema) }),
+    ...(validationSchema && { resolver: yupResolver(validationSchema) as any }),
   });
   useEffect(() => {
     if (fieldErrors) {

@@ -13,10 +13,9 @@ import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
+import { KeyInput } from '@/types';
 
-type FormValues = {
-  license_key: string;
-};
+type FormValues = KeyInput;
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => ({
   props: {
@@ -43,10 +42,10 @@ export default function VerifyLicenseKeyActions() {
     formState: { errors },
   } = useForm<FormValues>({
     shouldUnregister: true,
-    resolver: yupResolver(licenseKeyValidationSchema),
+    resolver: yupResolver(licenseKeyValidationSchema) as any,
     defaultValues: {
       license_key: "",
-    } as FormValues,
+    },
 
   });
 

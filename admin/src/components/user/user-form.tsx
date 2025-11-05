@@ -13,13 +13,9 @@ import StickyFooterPanel from '@/components/ui/sticky-footer-panel';
 import { useRouter } from 'next/router';
 import { Routes } from '@/config/routes';
 import { toast } from 'react-toastify';
+import * as yup from 'yup';
 
-type FormValues = {
-  name: string;
-  email: string;
-  password: string;
-  // permission: Permission;
-};
+type FormValues = yup.InferType<typeof customerValidationSchema>;
 
 const defaultValues = {
   email: '',

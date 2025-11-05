@@ -12,19 +12,13 @@ import { useTranslation } from 'next-i18next';
 import { useForm } from 'react-hook-form';
 import { useCallback } from 'react';
 import { transferShopOwnershipValidationSchema } from './transfer-shop-ownership-validation-schema';
+import * as yup from 'yup';
 
 type Props = {
   shop: Shop;
   vendors: User[];
 };
-type FormValues = {
-  shop_id?: string;
-  vendor: {
-    id: number;
-    name: string;
-  };
-  message?: string;
-};
+type FormValues = yup.InferType<typeof transferShopOwnershipValidationSchema>;
 
 const TransferShopOwnershipForm = ({ shop, vendors }: Props) => {
   const { t } = useTranslation();

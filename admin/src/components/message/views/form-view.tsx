@@ -15,13 +15,11 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import * as yup from 'yup';
 
-type FormValues = {
-  message: string;
-};
-
 const messageSchema = yup.object().shape({
   message: yup.string().required('error-body-required'),
 });
+
+type FormValues = yup.InferType<typeof messageSchema>;
 
 interface Props {
   className?: string;
