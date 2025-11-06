@@ -41,6 +41,7 @@ export { ChatIcon } from '@/components/icons/sidebar/chat';
 export { MaintenanceIcon } from '@/components/icons/sidebar/maintenance';
 export { StoreNoticeIcon } from '@/components/icons/sidebar/store-notice';
 export { TermsIcon } from '@/components/icons/sidebar/terms';
+export { AdvertisementIcon } from '@/components/icons/sidebar/advertisement';
 export { LogOutIcon } from '@/components/icons/logout';
 export { MyShopOwnerIcon } from '@/components/icons/sidebar/my-shop';
 export { ChatOwnerIcon } from '@/components/icons/sidebar/chat';

@@ -327,6 +327,24 @@ export const siteSettings = {
         ],
       },
 
+      marketing: {
+        href: '',
+        label: 'text-marketing-advertising',
+        icon: 'AdvertisementIcon',
+        childMenu: [
+          {
+            href: Routes.flashSale.list,
+            label: 'sidebar-nav-item-flash-sales',
+            icon: 'FlashDealsIcon',
+          },
+          {
+            href: Routes.advertisement.list,
+            label: 'sidebar-nav-item-advertisements',
+            icon: 'AdvertisementIcon',
+          },
+        ],
+      },
+
       settings: {
         href: '',
         label: 'text-site-management',
