@@ -4,7 +4,7 @@ import routes from '@/config/routes';
 export const CART_KEY = 'pixer-cart';
 export const CHECKOUT = 'pixer-checkout';
 export const PRODUCTS_PER_PAGE = 30;
-export const RTL_LANGUAGES: ReadonlyArray<string> = ['ar', 'he'];
+export const RTL_LANGUAGES: ReadonlyArray<string> = ['ar', 'he','fa'];
 export const LIMIT_HUNDRED = 100;
 export const SUPER_ADMIN = 'super_admin';
 export const STORE_OWNER = 'store_owner';

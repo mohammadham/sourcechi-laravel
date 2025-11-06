@@ -20,9 +20,9 @@ const AttributeList = ({ attributes, onSort, onOrder }: IProps) => {
     query: { shop },
   } = router;
   const alignLeft =
-    router.locale === 'ar' || router.locale === 'he' ? 'right' : 'left';
+    router.locale === 'ar' || router.locale === 'he' || router.locale === 'fa'? 'right' : 'left';
   const alignRight =
-    router.locale === 'ar' || router.locale === 'he' ? 'left' : 'right';
+    router.locale === 'ar' || router.locale === 'he' || router.locale === 'fa' ? 'left' : 'right';
 
   const [sortingObj, setSortingObj] = useState<{
     sort: SortOrder;

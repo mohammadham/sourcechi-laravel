@@ -14,7 +14,7 @@ export default function Modal({ open, onClose, children }: any) {
   const cancelButtonRef = useRef(null);
   const { t } = useTranslation('common');
   const { locale } = useRouter();
-  const dir = locale === 'ar' || locale === 'he' ? 'rtl' : 'ltr';
+  const dir = locale === 'ar' || locale === 'he' || locale === 'fa' ? 'rtl' : 'ltr';
   const [searchModal] = useAtom(searchModalInitialValues);
   const [approveModal] = useAtom(approveModalInitialValues);
 

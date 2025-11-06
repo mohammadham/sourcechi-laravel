@@ -146,7 +146,7 @@ const SideBarGroup = () => {
 const ShopLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const [miniSidebar, _] = useAtom(miniSidebarInitialValue);
   const { locale } = useRouter();
-  const dir = locale === 'ar' || locale === 'he' ? 'rtl' : 'ltr';
+  const dir = locale === 'ar' || locale === 'he' || locale ==='fa' ? 'rtl' : 'ltr';
   const { width } = useWindowSize();
   const [underMaintenance] = useAtom(checkIsMaintenanceModeComing);
   const [underMaintenanceStart] = useAtom(checkIsMaintenanceModeStart);

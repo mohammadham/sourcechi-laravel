@@ -22,7 +22,7 @@ const OwnerLayout: React.FC<{ children?: React.ReactNode }> = ({
   const [miniSidebar, _] = useAtom(miniSidebarInitialValue);
   const { locale } = useRouter();
   const router = useRouter();
-  const dir = locale === 'ar' || locale === 'he' ? 'rtl' : 'ltr';
+  const dir = locale === 'ar' || locale === 'he' || locale === 'fa' ? 'rtl' : 'ltr';
   const { width } = useWindowSize();
   const { permissions } = getAuthCredentials();
   let permission = hasAccess(adminOnly, permissions);
