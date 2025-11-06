@@ -161,7 +161,7 @@ export const Routes = {
         : `/${language}/products/${slug}/translate`;
     },
   },
-  visitStore: (slug: string) => getShopUrl(`/${slug}`),
+  visitStore: (slug: string) => getShopUrl(slug === '/' ? '' : `/${slug}`),
   vendorRequestForFlashSale: {
     ...routesFactory('/flash-sale/vendor-request'),
   },

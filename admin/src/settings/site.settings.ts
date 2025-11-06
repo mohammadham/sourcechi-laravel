@@ -643,10 +643,10 @@ export const siteSettings = {
     ],
   },
   product: {
-    placeholder: '/product-placeholder.svg',
+    placeholder: '/admin/product-placeholder.svg',
   },
   avatar: {
-    placeholder: '/avatar-placeholder.svg',
+    placeholder: '/admin/avatar-placeholder.svg',
   },
 };
 
