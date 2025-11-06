@@ -525,3 +525,22 @@ Route::group(['middleware' => ['permission:' . Permission::SUPER_ADMIN, 'auth:sa
     ]);
 });
 Route::apiResource('became-seller', BecameSellerController::class);
+
+/*
+|--------------------------------------------------------------------------
+| Additional Module Routes
+|--------------------------------------------------------------------------
+|
+| Load additional route files for modular features
+|
+*/
+
+// Load Advertisement System Routes
+if (file_exists(__DIR__ . '/../../../marvel/routes/advertisements.php')) {
+    require __DIR__ . '/../../../marvel/routes/advertisements.php';
+}
+
+// Load Storage System Routes
+if (file_exists(__DIR__ . '/../../../marvel/routes/storage.php')) {
+    require __DIR__ . '/../../../marvel/routes/storage.php';
+}
