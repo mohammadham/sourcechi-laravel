@@ -28,9 +28,10 @@ export const advertisementValidationSchema = yup.object().shape({
   media: yup.mixed().when('type', ([type], schema) => {
     const typeValue = typeof type === 'object' ? type?.value : type;
     if (typeValue === 'image' || typeValue === 'video') {
-      return schema.nullable();
+      // Media is required for image/video types
+      return schema.required('form:error-media-required');
     }
-    return schema;
+    return schema.nullable();
   }),
   html_code: yup.string().when('type', ([type], schema) => {
     const typeValue = typeof type === 'object' ? type?.value : type;

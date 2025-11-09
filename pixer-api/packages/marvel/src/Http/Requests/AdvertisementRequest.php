@@ -24,6 +24,9 @@ class AdvertisementRequest extends FormRequest
      */
     public function rules()
     {
+        // Check if this is an update request (has ID in route)
+        $isUpdate = $this->route('id') !== null;
+        
         $rules = [
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::in(['image', 'video', 'html'])],
@@ -42,10 +45,20 @@ class AdvertisementRequest extends FormRequest
             'display_settings' => ['nullable', 'json'],
         ];
 
-        // Type-specific validation
-        if ($this->input('type') === 'image' || $this->input('type') === 'video') {
-            $rules['media'] = ['nullable', 'file'];
-            if ($this->input('type') === 'image') {
+        // Type-specific validation for media
+        $type = $this->input('type');
+        
+        if ($type === 'image' || $type === 'video') {
+            // For create: media is required
+            // For update: media is optional (only if user wants to change it)
+            if ($isUpdate) {
+                $rules['media'] = ['nullable', 'file'];
+            } else {
+                $rules['media'] = ['required', 'file'];
+            }
+            
+            // Add type-specific rules
+            if ($type === 'image') {
                 $rules['media'][] = 'mimes:jpg,jpeg,png,gif,webp';
                 $rules['media'][] = 'max:5120'; // 5MB
             } else {
@@ -54,7 +67,7 @@ class AdvertisementRequest extends FormRequest
             }
         }
 
-        if ($this->input('type') === 'html') {
+        if ($type === 'html') {
             $rules['html_code'] = ['required', 'string'];
         }
 
@@ -75,6 +88,8 @@ class AdvertisementRequest extends FormRequest
             'position.required' => 'موقعیت نمایش الزامی است',
             'position.in' => 'موقعیت نمایش معتبر نیست',
             'target_url.url' => 'آدرس URL معتبر نیست',
+            'media.required' => 'انتخاب فایل الزامی است',
+            'media.file' => 'فایل انتخاب شده معتبر نیست',
             'media.mimes' => 'فرمت فایل پشتیبانی نمی‌شود',
             'media.max' => 'حجم فایل بیش از حد مجاز است',
             'html_code.required' => 'کد HTML الزامی است',
