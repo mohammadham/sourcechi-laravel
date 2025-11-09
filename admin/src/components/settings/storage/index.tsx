@@ -549,6 +549,7 @@ export default function StorageSettingsForm({ settings }: IProps) {
                         {t('form:telegram-auth-step-2-description')}
                       </p>
                       <Input
+                        name="telegram_code"
                         label={t('form:input-label-telegram-code')}
                         value={telegramCode}
                         onChange={(e) => setTelegramCode(e.target.value)}
@@ -589,6 +590,7 @@ export default function StorageSettingsForm({ settings }: IProps) {
                         {t('form:telegram-auth-step-3-description')}
                       </p>
                       <Input
+                        name="telegram_2fa_password"
                         label={t('form:input-label-telegram-2fa-password')}
                         type="password"
                         value={telegram2FA}
