@@ -64,6 +64,11 @@ export default function AdvertisementForm({ initialValues, onSubmit, loading }: 
       is_active: initialValues?.is_active ?? true,
       order: initialValues?.order ?? 0,
       display_settings: null,
+      media: initialValues?.media_url ? {
+        id: initialValues.id,
+        original: initialValues.media_url,
+        thumbnail: initialValues.media_url,
+      } : undefined,
     },
   });
 
@@ -291,7 +296,15 @@ if (typeValue === 'html') {
           </Card>
         </div>
 
-        <div className="mb-5 text-end">
+        <div className="mb-5 text-end flex gap-3 justify-end">
+          <Button
+            variant="outline"
+            onClick={() => router.back()}
+            type="button"
+            disabled={loading}
+          >
+            {t('form:button-label-cancel')}
+          </Button>
           <Button loading={loading} disabled={loading}>
             {initialValues ? t('form:button-label-update') : t('form:button-label-create')}
           </Button>

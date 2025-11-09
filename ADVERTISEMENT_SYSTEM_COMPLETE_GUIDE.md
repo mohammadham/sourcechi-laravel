@@ -510,7 +510,62 @@ public function getActiveByPosition($position)
 
 ---
 
+## 📝 تغییرات (Changelog)
+
+### نسخه 1.1.0 - 2025-11-09
+
+#### ✅ رفع مشکلات
+
+**1. رفع مشکل دکمه حذف (Delete Button)**
+- **مشکل:** دکمه حذف در لیست تبلیغات کلیک می‌شد اما modal تأیید حذف نمایش داده نمی‌شد و صفحه freeze می‌شد
+- **علت:** `DELETE_ADVERTISEMENT` در سیستم modal ثبت نشده بود
+- **راه‌حل:** 
+  - ایجاد کامپوننت `/admin/src/components/advertisements/advertisement-delete-view.tsx`
+  - اضافه کردن `'DELETE_ADVERTISEMENT'` به `/admin/src/components/ui/modal/modal.context.tsx`
+  - اضافه کردن `AdvertisementDeleteView` به `/admin/src/components/ui/modal/managed-modal.tsx`
+
+**2. اضافه کردن دکمه لغو (Cancel Button)**
+- **مشکل:** در صفحه ویرایش تبلیغ فقط دکمه ذخیره وجود داشت و امکان لغو و بازگشت نبود
+- **راه‌حل:**
+  - اضافه کردن دکمه Cancel در `/admin/src/components/advertisements/advertisement-form.tsx`
+  - استفاده از `router.back()` برای بازگشت
+  - اضافه کردن ترجمه `button-label-cancel` به فارسی (لغو) و انگلیسی (Cancel)
+
+**3. رفع نمایش فایل ضمیمه شده قبلی**
+- **مشکل:** در صفحه ویرایش، فایل/تصویر ضمیمه شده قبلی در فرم نمایش داده نمی‌شد
+- **راه‌حل:**
+  - تغییر `defaultValues` در فرم برای شامل شدن `media` با ساختار:
+  ```typescript
+  media: initialValues?.media_url ? {
+    id: initialValues.id,
+    original: initialValues.media_url,
+    thumbnail: initialValues.media_url,
+  } : undefined
+  ```
+
+#### 📁 فایل‌های تغییر یافته:
+```
+admin/src/components/advertisements/advertisement-delete-view.tsx     [جدید]
+admin/src/components/advertisements/advertisement-form.tsx            [ویرایش]
+admin/src/components/ui/modal/modal.context.tsx                       [ویرایش]
+admin/src/components/ui/modal/managed-modal.tsx                       [ویرایش]
+admin/public/locales/fa/form.json                                     [ویرایش]
+admin/public/locales/en/form.json                                     [ویرایش]
+supervisor/conf.d/admin.conf                                          [ویرایش - npm]
+```
+
+#### 🔧 تنظیمات Supervisor:
+- تغییر command از `yarn` به `npm` در `admin.conf`
+- کپی `admin.conf` به `/etc/supervisor/conf.d/`
+
+#### ✅ وضعیت تست:
+- سرویس admin بر روی port 3002 در حال اجرا
+- Build موفقیت‌آمیز
+- تمام تغییرات پیاده‌سازی شده
+
+---
+
 **تاریخ ایجاد:** 2025-01-XX  
-**نسخه:** 1.0.0  
+**نسخه فعلی:** 1.1.0  
 **سازگاری:** Pixer 6.9.0  
 **نویسنده:** Emergent E1 AI Agent

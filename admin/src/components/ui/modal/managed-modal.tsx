@@ -162,6 +162,10 @@ const DeleteOwnershipTransferRequest = dynamic(
     import('@/components/ownership-transfer/ownership-transfer-delete-view'),
 );
 
+const AdvertisementDeleteView = dynamic(
+  () => import('@/components/advertisements/advertisement-delete-view'),
+);
+
 function renderModal(view: MODAL_VIEWS | undefined, data: any) {
   switch (view) {
     case 'DELETE_PRODUCT':
@@ -262,6 +266,8 @@ function renderModal(view: MODAL_VIEWS | undefined, data: any) {
       return <TransferShopOwnershipView />;
     case 'DELETE_OWNERSHIP_TRANSFER_REQUEST':
       return <DeleteOwnershipTransferRequest />;
+    case 'DELETE_ADVERTISEMENT':
+      return <AdvertisementDeleteView />;
     default:
       return null;
   }
