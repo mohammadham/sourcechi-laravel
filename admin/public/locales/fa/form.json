@@ -833,5 +833,6 @@
   "error-invalid-position": "موقعیت معتبر نیست",
   "error-html-code-required": "کد HTML الزامی است",
   "error-order-min": "ترتیب باید عدد مثبت باشد",
-  "error-media-required": "انتخاب فایل الزامی است"
+  "error-media-required": "انتخاب فایل الزامی است",
+  "button-label-create-advertisement":" ایجاد تبلیغ"
 }

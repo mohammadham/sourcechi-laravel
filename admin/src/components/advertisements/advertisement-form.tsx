@@ -306,7 +306,7 @@ if (typeValue === 'html') {
             {t('form:button-label-cancel')}
           </Button>
           <Button loading={loading} disabled={loading}>
-            {initialValues ? t('form:button-label-update') : t('form:button-label-create')}
+            {initialValues ? t('form:button-label-update') : t('form:button-label-create-advertisement')}
           </Button>
         </div>
       </form>

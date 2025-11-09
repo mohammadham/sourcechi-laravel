@@ -833,5 +833,6 @@
   "error-invalid-position": "Invalid position",
   "error-html-code-required": "HTML code is required",
   "error-order-min": "Order must be 0 or greater",
-  "error-media-required": "Media file is required"
+  "error-media-required": "Media file is required",
+  "button-label-create-advertisement": "Create Advertisement"
 }
