@@ -50,8 +50,20 @@ class TelegramStorageDriver extends BaseStorageDriver
             
             // Create directory if not exists
             $directory = dirname($this->sessionPath);
+            \Log::info('[Telegram Init] Checking directory: ' . $directory);
+            
             if (!is_dir($directory)) {
-                mkdir($directory, 0755, true);
+                \Log::info('[Telegram Init] Creating directory...');
+                if (!mkdir($directory, 0777, true)) {
+                    \Log::error('[Telegram Init] Failed to create directory');
+                    return false;
+                }
+                chmod($directory, 0777);
+            }
+            
+            if (!is_writable($directory)) {
+                \Log::error('[Telegram Init] Directory not writable: ' . $directory);
+                return false;
             }
 
             // MadelineProto settings
@@ -60,17 +72,28 @@ class TelegramStorageDriver extends BaseStorageDriver
                 ->setApiId((int) $this->config['api_id'])
                 ->setApiHash($this->config['api_hash']);
             
-            $settings->getLogger()->setLevel(\danog\MadelineProto\Logger::LOGGER);
+            $settings->getLogger()
+                ->setType(\danog\MadelineProto\Logger::FILE_LOGGER)
+                ->setExtra(storage_path('logs/telegram.log'))
+                ->setLevel(\danog\MadelineProto\Logger::LOGGER);
 
+            \Log::info('[Telegram Init] Initializing API with session: ' . $this->sessionPath);
             $this->telegram = new API($this->sessionPath, $settings);
             
             // Check if already logged in
+            \Log::info('[Telegram Init] Checking authentication status...');
             if (!$this->telegram->getSelf()) {
+                \Log::warning('[Telegram Init] Not authenticated');
                 return false;
             }
             
+            \Log::info('[Telegram Init] Successfully authenticated');
             return true;
         } catch (\Exception $e) {
+            \Log::error('[Telegram Init] Exception: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
             $this->log('Failed to initialize Telegram: ' . $e->getMessage(), 'error');
             return false;
         }
@@ -85,15 +108,51 @@ class TelegramStorageDriver extends BaseStorageDriver
             $this->config['phone'] = $phone;
             $this->sessionPath = storage_path('app/telegram/session_' . md5($phone) . '.madeline');
             
+            // Log the session path and check directory
+            $directory = dirname($this->sessionPath);
+            \Log::info('[Telegram Auth] Session path: ' . $this->sessionPath);
+            \Log::info('[Telegram Auth] Directory: ' . $directory);
+            \Log::info('[Telegram Auth] Directory exists: ' . (is_dir($directory) ? 'yes' : 'no'));
+            \Log::info('[Telegram Auth] Directory writable: ' . (is_writable($directory) ? 'yes' : 'no'));
+            
+            // Create directory if not exists
+            if (!is_dir($directory)) {
+                \Log::info('[Telegram Auth] Creating directory...');
+                if (!mkdir($directory, 0777, true)) {
+                    \Log::error('[Telegram Auth] Failed to create directory');
+                    return $this->errorResponse('Failed to create session directory. Please check permissions.');
+                }
+                chmod($directory, 0777);
+            }
+            
+            // Verify directory is writable
+            if (!is_writable($directory)) {
+                \Log::error('[Telegram Auth] Directory not writable');
+                return $this->errorResponse('Session directory is not writable. Please check permissions: ' . $directory);
+            }
+            
+            \Log::info('[Telegram Auth] Creating MadelineProto settings...');
             $settings = new Settings;
             $settings->getAppInfo()
                 ->setApiId((int) $this->config['api_id'])
                 ->setApiHash($this->config['api_hash']);
+            
+            // Set logger to file to avoid output issues
+            $settings->getLogger()
+                ->setType(\danog\MadelineProto\Logger::FILE_LOGGER)
+                ->setExtra(storage_path('logs/telegram.log'))
+                ->setLevel(\danog\MadelineProto\Logger::LOGGER);
 
+            \Log::info('[Telegram Auth] Initializing MadelineProto API...');
             $this->telegram = new API($this->sessionPath, $settings);
             
+            \Log::info('[Telegram Auth] Sending login code to: ' . $phone);
             // Send code
             $sentCode = $this->telegram->phoneLogin($phone);
+            
+            \Log::info('[Telegram Auth] Code sent successfully', [
+                'phone_code_hash' => isset($sentCode['phone_code_hash']),
+            ]);
             
             // Store phone_code_hash in cache for verification
             Cache::put("telegram_auth_{$phone}", [
@@ -106,7 +165,13 @@ class TelegramStorageDriver extends BaseStorageDriver
                 'phone_code_hash' => $sentCode['phone_code_hash'] ?? null,
             ]);
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to send code: ' . $e->getMessage());
+            \Log::error('[Telegram Auth] Exception occurred', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return $this->errorResponse('Failed to send code: ' . $e->getMessage() . ' (Line: ' . $e->getLine() . ')');
         }
     }
 
@@ -116,11 +181,16 @@ class TelegramStorageDriver extends BaseStorageDriver
     public function verifyCode(string $phone, string $code): array
     {
         try {
+            \Log::info('[Telegram Verify] Starting code verification for: ' . $phone);
+            
             $authData = Cache::get("telegram_auth_{$phone}");
             
             if (!$authData) {
+                \Log::error('[Telegram Verify] Auth session not found in cache');
                 return $this->errorResponse('Authentication session expired. Please try again.');
             }
+            
+            \Log::info('[Telegram Verify] Auth data found in cache');
             
             $this->config['phone'] = $phone;
             $this->config['api_id'] = $authData['api_id'];
@@ -131,14 +201,24 @@ class TelegramStorageDriver extends BaseStorageDriver
             $settings->getAppInfo()
                 ->setApiId((int) $this->config['api_id'])
                 ->setApiHash($this->config['api_hash']);
+            
+            $settings->getLogger()
+                ->setType(\danog\MadelineProto\Logger::FILE_LOGGER)
+                ->setExtra(storage_path('logs/telegram.log'))
+                ->setLevel(\danog\MadelineProto\Logger::LOGGER);
 
+            \Log::info('[Telegram Verify] Initializing API...');
             $this->telegram = new API($this->sessionPath, $settings);
             
+            \Log::info('[Telegram Verify] Completing phone login with code...');
             // Complete authorization with code
             $authorization = $this->telegram->completePhoneLogin($code);
             
+            \Log::info('[Telegram Verify] Authorization response type: ' . ($authorization['_'] ?? 'unknown'));
+            
             if (isset($authorization['_']) && $authorization['_'] === 'auth.authorization') {
                 // Successfully logged in
+                \Log::info('[Telegram Verify] Authentication successful');
                 $user = $this->telegram->getSelf();
                 
                 Cache::forget("telegram_auth_{$phone}");
@@ -155,6 +235,7 @@ class TelegramStorageDriver extends BaseStorageDriver
             
             // Check if 2FA is required
             if (isset($authorization['_']) && $authorization['_'] === 'account.password') {
+                \Log::info('[Telegram Verify] 2FA required');
                 Cache::put("telegram_2fa_{$phone}", [
                     'api_id' => $this->config['api_id'],
                     'api_hash' => $this->config['api_hash'],
@@ -165,9 +246,14 @@ class TelegramStorageDriver extends BaseStorageDriver
                 ]);
             }
             
+            \Log::error('[Telegram Verify] Invalid authorization response');
             return $this->errorResponse('Invalid code or authentication failed');
         } catch (\Exception $e) {
-            return $this->errorResponse('Verification failed: ' . $e->getMessage());
+            \Log::error('[Telegram Verify] Exception: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            return $this->errorResponse('Verification failed: ' . $e->getMessage() . ' (Line: ' . $e->getLine() . ')');
         }
     }
 
@@ -177,11 +263,16 @@ class TelegramStorageDriver extends BaseStorageDriver
     public function verify2FA(string $phone, string $password): array
     {
         try {
+            \Log::info('[Telegram 2FA] Starting 2FA verification for: ' . $phone);
+            
             $authData = Cache::get("telegram_2fa_{$phone}");
             
             if (!$authData) {
+                \Log::error('[Telegram 2FA] Session not found in cache');
                 return $this->errorResponse('2FA session expired. Please start over.');
             }
+            
+            \Log::info('[Telegram 2FA] Auth data found in cache');
             
             $this->config['phone'] = $phone;
             $this->config['api_id'] = $authData['api_id'];
@@ -192,13 +283,23 @@ class TelegramStorageDriver extends BaseStorageDriver
             $settings->getAppInfo()
                 ->setApiId((int) $this->config['api_id'])
                 ->setApiHash($this->config['api_hash']);
+            
+            $settings->getLogger()
+                ->setType(\danog\MadelineProto\Logger::FILE_LOGGER)
+                ->setExtra(storage_path('logs/telegram.log'))
+                ->setLevel(\danog\MadelineProto\Logger::LOGGER);
 
+            \Log::info('[Telegram 2FA] Initializing API...');
             $this->telegram = new API($this->sessionPath, $settings);
             
+            \Log::info('[Telegram 2FA] Completing 2FA login...');
             // Complete 2FA
             $authorization = $this->telegram->complete2faLogin($password);
             
+            \Log::info('[Telegram 2FA] Authorization response type: ' . ($authorization['_'] ?? 'unknown'));
+            
             if (isset($authorization['_']) && $authorization['_'] === 'auth.authorization') {
+                \Log::info('[Telegram 2FA] 2FA authentication successful');
                 $user = $this->telegram->getSelf();
                 
                 Cache::forget("telegram_2fa_{$phone}");
@@ -212,9 +313,14 @@ class TelegramStorageDriver extends BaseStorageDriver
                 ]);
             }
             
+            \Log::error('[Telegram 2FA] Invalid authorization response');
             return $this->errorResponse('Invalid 2FA password');
         } catch (\Exception $e) {
-            return $this->errorResponse('2FA verification failed: ' . $e->getMessage());
+            \Log::error('[Telegram 2FA] Exception: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            return $this->errorResponse('2FA verification failed: ' . $e->getMessage() . ' (Line: ' . $e->getLine() . ')');
         }
     }
 
