@@ -102,7 +102,7 @@ class TelegramStorageDriver extends BaseStorageDriver
     /**
      * Start phone authentication
      */
-    public function startPhoneAuth(string $phone): array
+    public function startPhoneAuth(string $phone, int $retryCount = 0): array
     {
         try {
             $this->config['phone'] = $phone;
@@ -114,6 +114,7 @@ class TelegramStorageDriver extends BaseStorageDriver
             \Log::info('[Telegram Auth] Directory: ' . $directory);
             \Log::info('[Telegram Auth] Directory exists: ' . (is_dir($directory) ? 'yes' : 'no'));
             \Log::info('[Telegram Auth] Directory writable: ' . (is_writable($directory) ? 'yes' : 'no'));
+            \Log::info('[Telegram Auth] Retry count: ' . $retryCount);
             
             // Create directory if not exists
             if (!is_dir($directory)) {
@@ -165,13 +166,62 @@ class TelegramStorageDriver extends BaseStorageDriver
                 'phone_code_hash' => $sentCode['phone_code_hash'] ?? null,
             ]);
         } catch (\Exception $e) {
+            $errorMessage = $e->getMessage();
+            
             \Log::error('[Telegram Auth] Exception occurred', [
-                'message' => $e->getMessage(),
+                'message' => $errorMessage,
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
+                'retry_count' => $retryCount,
             ]);
-            return $this->errorResponse('Failed to send code: ' . $e->getMessage() . ' (Line: ' . $e->getLine() . ')');
+            
+            // Handle AUTH_RESTART error by deleting session and retrying
+            if (strpos($errorMessage, 'AUTH_RESTART') !== false && $retryCount < 2) {
+                \Log::info('[Telegram Auth] AUTH_RESTART detected, deleting session and retrying...');
+                
+                // Delete session files
+                $this->deleteSessionFiles($this->sessionPath);
+                
+                // Wait a moment before retry
+                sleep(1);
+                
+                // Retry with incremented counter
+                return $this->startPhoneAuth($phone, $retryCount + 1);
+            }
+            
+            return $this->errorResponse('Failed to send code: ' . $errorMessage . ' (Line: ' . $e->getLine() . ')');
+        }
+    }
+    
+    /**
+     * Delete session files
+     */
+    private function deleteSessionFiles(string $sessionPath): void
+    {
+        try {
+            // Delete main session file
+            if (file_exists($sessionPath)) {
+                \Log::info('[Telegram] Deleting session file: ' . $sessionPath);
+                unlink($sessionPath);
+            }
+            
+            // Delete lock file if exists
+            $lockFile = $sessionPath . '.lock';
+            if (file_exists($lockFile)) {
+                \Log::info('[Telegram] Deleting lock file: ' . $lockFile);
+                unlink($lockFile);
+            }
+            
+            // Delete temp files
+            $tempFile = $sessionPath . '.temp.session';
+            if (file_exists($tempFile)) {
+                \Log::info('[Telegram] Deleting temp file: ' . $tempFile);
+                unlink($tempFile);
+            }
+            
+            \Log::info('[Telegram] Session files deleted successfully');
+        } catch (\Exception $e) {
+            \Log::error('[Telegram] Failed to delete session files: ' . $e->getMessage());
         }
     }
 
