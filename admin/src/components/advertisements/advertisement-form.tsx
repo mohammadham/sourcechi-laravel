@@ -80,14 +80,14 @@ export default function AdvertisementForm({ initialValues, onSubmit, loading }: 
   const watchPosition = watch('position');
 
   useEffect(() => {
-    const typeValue = typeof watchType === 'object' ? watchType?.value : watchType;
+    const typeValue = typeof watchType === 'object' && watchType !== null && 'value' in watchType ? (watchType as any).value : watchType;
     if (typeValue) {
       setSelectedType(typeValue);
     }
   }, [watchType]);
 
   useEffect(() => {
-    const positionValue = typeof watchPosition === 'object' ? watchPosition?.value : watchPosition;
+    const positionValue = typeof watchPosition === 'object' && watchPosition !== null && 'value' in watchPosition ? (watchPosition as any).value : watchPosition;
     if (positionValue) {
       setSelectedPosition(positionValue);
     }
