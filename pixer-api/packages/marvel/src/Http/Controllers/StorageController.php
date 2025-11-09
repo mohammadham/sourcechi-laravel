@@ -97,6 +97,36 @@ class StorageController extends CoreController
     }
 
     /**
+     * Telegram: Check authentication status
+     */
+    public function telegramCheckAuth(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'phone' => 'required|string',
+                'api_id' => 'required|string',
+                'api_hash' => 'required|string',
+            ]);
+
+            $driver = new TelegramStorageDriver();
+            $driver->initialize([
+                'phone' => $request->phone,
+                'api_id' => $request->api_id,
+                'api_hash' => $request->api_hash,
+            ]);
+
+            $result = $driver->checkAuthStatus();
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Status check failed: ' . $e->getMessage(),
+            ], 400);
+        }
+    }
+    
+    /**
      * Telegram: Start phone authentication
      */
     public function telegramStartAuth(Request $request): JsonResponse

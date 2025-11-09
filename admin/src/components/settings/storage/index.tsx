@@ -16,7 +16,7 @@ import { storageValidationSchema } from './storage-validation-schema';
 import { SaveIcon } from '@/components/icons/save';
 import { useConfirmRedirectIfDirty } from '@/utils/confirmed-redirect-if-dirty';
 import Alert from '@/components/ui/alert';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import axios from 'axios';
 
 // Create axios instance with baseURL
@@ -157,6 +157,11 @@ export default function StorageSettingsForm({ settings }: IProps) {
   const googleDriveEnabled = watch('storage.drivers.google_drive.enabled');
   const ftpEnabled = watch('storage.drivers.ftp.enabled');
   
+  // Watch telegram credentials for checking auth status
+  const telegramApiId = watch('storage.drivers.telegram.api_id');
+  const telegramApiHash = watch('storage.drivers.telegram.api_hash');
+  const telegramPhoneWatch = watch('storage.drivers.telegram.phone');
+  
   // Watch current selected values to ensure they're always in the list
   const currentDefaultDriver = watch('storage.default_driver');
   const currentImageDriver = watch('storage.type_mapping.image');
@@ -164,6 +169,41 @@ export default function StorageSettingsForm({ settings }: IProps) {
   const currentDigitalFileDriver = watch('storage.type_mapping.digital_file');
   const currentDocumentDriver = watch('storage.type_mapping.document');
 
+  // Check telegram authentication status on mount and when credentials change
+  useEffect(() => {
+    const checkTelegramAuth = async () => {
+      if (!telegramEnabled || !telegramApiId || !telegramApiHash || !telegramPhoneWatch) {
+        return;
+      }
+      
+      console.log('[Telegram] Checking authentication status...');
+      
+      try {
+        const response = await apiClient.post('/api/storage/telegram/auth/check', {
+          phone: telegramPhoneWatch,
+          api_id: telegramApiId,
+          api_hash: telegramApiHash,
+        });
+        
+        console.log('[Telegram] Auth status response:', response.data);
+        
+        if (response.data.success && response.data.authenticated) {
+          console.log('[Telegram] User is authenticated');
+          setTelegramAuthStep('authenticated');
+          setTelegramPhone(telegramPhoneWatch);
+        } else {
+          console.log('[Telegram] User is not authenticated');
+          setTelegramAuthStep('idle');
+        }
+      } catch (error: any) {
+        console.error('[Telegram] Auth check error:', error);
+        setTelegramAuthStep('idle');
+      }
+    };
+    
+    checkTelegramAuth();
+  }, [telegramEnabled, telegramApiId, telegramApiHash, telegramPhoneWatch]);
+  
   // Filter driver options to show only enabled drivers + currently selected ones
   const driverOptions = useMemo(() => {
     // Local is always available
@@ -259,14 +299,25 @@ export default function StorageSettingsForm({ settings }: IProps) {
       });
 
       if (response.data.success) {
-        console.log('[Telegram Auth] Code sent successfully, moving to code verification step');
-        setTelegramAuthStep('code');
-        setTelegramPhone(phone);
-        setTelegramAuthData(response.data);
-        setTestResult({
-          success: true,
-          message: t('form:telegram-code-sent'),
-        });
+        // Check if already authenticated
+        if (response.data.authenticated) {
+          console.log('[Telegram Auth] Already authenticated, skipping to authenticated state');
+          setTelegramAuthStep('authenticated');
+          setTelegramPhone(phone);
+          setTestResult({
+            success: true,
+            message: t('form:telegram-already-authenticated'),
+          });
+        } else {
+          console.log('[Telegram Auth] Code sent successfully, moving to code verification step');
+          setTelegramAuthStep('code');
+          setTelegramPhone(phone);
+          setTelegramAuthData(response.data);
+          setTestResult({
+            success: true,
+            message: t('form:telegram-code-sent'),
+          });
+        }
       } else {
         console.error('[Telegram Auth] Failed:', response.data.message);
         setTestResult({

@@ -100,6 +100,72 @@ class TelegramStorageDriver extends BaseStorageDriver
     }
 
     /**
+     * Check if already authenticated
+     */
+    public function checkAuthStatus(): array
+    {
+        try {
+            if (!isset($this->config['phone']) || empty($this->config['phone'])) {
+                return $this->successResponse('Not authenticated', [
+                    'authenticated' => false,
+                ]);
+            }
+            
+            $this->sessionPath = storage_path('app/telegram/session_' . md5($this->config['phone']) . '.madeline');
+            
+            // Check if session file exists
+            if (!file_exists($this->sessionPath)) {
+                \Log::info('[Telegram Status] Session file does not exist');
+                return $this->successResponse('Not authenticated', [
+                    'authenticated' => false,
+                ]);
+            }
+            
+            // Initialize and check authentication
+            $settings = new Settings;
+            $settings->getAppInfo()
+                ->setApiId((int) $this->config['api_id'])
+                ->setApiHash($this->config['api_hash']);
+            
+            $settings->getLogger()
+                ->setType(\danog\MadelineProto\Logger::FILE_LOGGER)
+                ->setExtra(storage_path('logs/telegram.log'))
+                ->setLevel(\danog\MadelineProto\Logger::NOTICE);
+            
+            $this->telegram = new API($this->sessionPath, $settings);
+            
+            // Get self info to verify authentication
+            $self = $this->telegram->getSelf();
+            
+            if ($self) {
+                \Log::info('[Telegram Status] User is authenticated', [
+                    'user_id' => $self['id'] ?? null,
+                    'phone' => $self['phone'] ?? null,
+                ]);
+                
+                return $this->successResponse('Authenticated', [
+                    'authenticated' => true,
+                    'user' => [
+                        'id' => $self['id'] ?? null,
+                        'first_name' => $self['first_name'] ?? '',
+                        'username' => $self['username'] ?? '',
+                        'phone' => $self['phone'] ?? '',
+                    ],
+                ]);
+            }
+            
+            return $this->successResponse('Not authenticated', [
+                'authenticated' => false,
+            ]);
+        } catch (\Exception $e) {
+            \Log::info('[Telegram Status] Not authenticated - ' . $e->getMessage());
+            return $this->successResponse('Not authenticated', [
+                'authenticated' => false,
+            ]);
+        }
+    }
+    
+    /**
      * Start phone authentication
      */
     public function startPhoneAuth(string $phone, int $retryCount = 0): array
@@ -146,6 +212,27 @@ class TelegramStorageDriver extends BaseStorageDriver
 
             \Log::info('[Telegram Auth] Initializing MadelineProto API...');
             $this->telegram = new API($this->sessionPath, $settings);
+            
+            // Check if already logged in
+            try {
+                $self = $this->telegram->getSelf();
+                if ($self) {
+                    \Log::info('[Telegram Auth] Already logged in', [
+                        'user_id' => $self['id'] ?? null,
+                    ]);
+                    return $this->successResponse('Already authenticated', [
+                        'authenticated' => true,
+                        'user' => [
+                            'id' => $self['id'] ?? null,
+                            'first_name' => $self['first_name'] ?? '',
+                            'username' => $self['username'] ?? '',
+                        ],
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // Not logged in, continue with login flow
+                \Log::info('[Telegram Auth] Not logged in yet, proceeding with authentication');
+            }
             
             \Log::info('[Telegram Auth] Sending login code to: ' . $phone);
             // Send code
