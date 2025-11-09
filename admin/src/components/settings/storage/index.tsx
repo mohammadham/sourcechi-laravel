@@ -316,15 +316,21 @@ export default function StorageSettingsForm({ settings }: IProps) {
         code: telegramCode,
       });
 
+      // Check both possible locations for requires_2fa flag
+      const requires2FA = response.data.data?.requires_2fa || response.data.requires_2fa;
+      
       console.log('[Telegram Verify] Backend response:', {
         success: response.data.success,
-        requires2FA: response.data.data?.requires_2fa,
+        requires2FA: requires2FA,
+        responseData: response.data.data,
+        fullResponse: response.data,
       });
 
       if (response.data.success) {
-        if (response.data.data?.requires_2fa) {
+        if (requires2FA) {
           console.log('[Telegram Verify] 2FA required, moving to 2FA step');
           setTelegramAuthStep('2fa');
+          setTelegramCode(''); // Clear the code field
           setTestResult({
             success: true,
             message: t('form:telegram-2fa-required'),
