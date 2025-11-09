@@ -48,12 +48,16 @@ export default function AdvertisementForm({ initialValues, onSubmit, loading }: 
   const [selectedPosition, setSelectedPosition] = useState<string>(initialValues?.position || 'header');
   const { data: dimensionsData } = usePositionDimensionsQuery();
 
+  // Find the initial type and position objects
+  const initialTypeObject = advertisementTypes.find(t => t.value === (initialValues?.type || 'image'));
+  const initialPositionObject = advertisementPositions.find(p => p.value === (initialValues?.position || 'header'));
+
   const methods = useForm<FormValues>({
     resolver: yupResolver(advertisementValidationSchema),
     defaultValues: {
       title: initialValues?.title || '',
-      type: initialValues?.type || 'image',
-      position: initialValues?.position || 'header',
+      type: initialTypeObject || advertisementTypes[0],
+      position: initialPositionObject || advertisementPositions[0],
       html_code: initialValues?.html_code || '',
       target_url: initialValues?.target_url || '',
       open_in_new_tab: initialValues?.open_in_new_tab ?? true,
@@ -76,11 +80,17 @@ export default function AdvertisementForm({ initialValues, onSubmit, loading }: 
   const watchPosition = watch('position');
 
   useEffect(() => {
-    setSelectedType(watchType);
+    const typeValue = typeof watchType === 'object' ? watchType?.value : watchType;
+    if (typeValue) {
+      setSelectedType(typeValue);
+    }
   }, [watchType]);
 
   useEffect(() => {
-    setSelectedPosition(watchPosition);
+    const positionValue = typeof watchPosition === 'object' ? watchPosition?.value : watchPosition;
+    if (positionValue) {
+      setSelectedPosition(positionValue);
+    }
   }, [watchPosition]);
 
   const getDimensionInfo = () => {
@@ -117,18 +127,23 @@ export default function AdvertisementForm({ initialValues, onSubmit, loading }: 
     );
   };
 
+ 
   const handleFormSubmit = (values: FormValues) => {
+    // Extract values from objects if they are select options
+    const typeValue = typeof values.type === 'object' ? (values.type as any).value : values.type;
+    const positionValue = typeof values.position === 'object' ? (values.position as any).value : values.position;
+
     const input: AdvertisementInput = {
       title: values.title,
-      type: values.type,
-      position: values.position,
+      type: typeValue,
+      position: positionValue,
       target_url: values.target_url || undefined,
       open_in_new_tab: values.open_in_new_tab,
       is_active: values.is_active,
       order: values.order,
     };
 
-    if (values.type === 'html') {
+    if (typeValue === 'html') {
       input.html_code = values.html_code;
     } else if (values.media) {
       input.media = values.media as File;
@@ -163,7 +178,8 @@ export default function AdvertisementForm({ initialValues, onSubmit, loading }: 
                 name="type"
                 control={control}
                 options={advertisementTypes}
-                defaultValue={advertisementTypes[0]}
+                getOptionLabel={(option: any) => option.label}
+                getOptionValue={(option: any) => option.value}
               />
               {errors.type && (
                 <p className="my-2 text-xs text-red-500">{t(errors.type?.message!)}</p>
@@ -176,7 +192,8 @@ export default function AdvertisementForm({ initialValues, onSubmit, loading }: 
                 name="position"
                 control={control}
                 options={advertisementPositions}
-                defaultValue={advertisementPositions[0]}
+                getOptionLabel={(option: any) => option.label}
+                getOptionValue={(option: any) => option.value}
               />
               {errors.position && (
                 <p className="my-2 text-xs text-red-500">{t(errors.position?.message!)}</p>

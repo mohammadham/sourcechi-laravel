@@ -3,31 +3,38 @@ import * as yup from 'yup';
 export const advertisementValidationSchema = yup.object().shape({
   title: yup.string().required('form:error-title-required'),
   type: yup
-    .string()
-    .oneOf(['image', 'video', 'html'], 'form:error-invalid-type')
+    .mixed()
+    .test('is-valid-type', 'form:error-invalid-type', (value: any) => {
+      if (!value) return false;
+      const typeValue = typeof value === 'object' ? value.value : value;
+      return ['image', 'video', 'html'].includes(typeValue);
+    })
     .required('form:error-type-required'),
   position: yup
-    .string()
-    .oneOf(
-      [
+    .mixed()
+    .test('is-valid-position', 'form:error-invalid-position', (value: any) => {
+      if (!value) return false;
+      const positionValue = typeof value === 'object' ? value.value : value;
+      return [
         'header',
         'sidebar',
         'footer',
         'between_products',
         'product_detail',
         'popup',
-      ],
-      'form:error-invalid-position'
-    )
+      ].includes(positionValue);
+    })
     .required('form:error-position-required'),
   media: yup.mixed().when('type', ([type], schema) => {
-    if (type === 'image' || type === 'video') {
+    const typeValue = typeof type === 'object' ? type?.value : type;
+    if (typeValue === 'image' || typeValue === 'video') {
       return schema.nullable();
     }
     return schema;
   }),
   html_code: yup.string().when('type', ([type], schema) => {
-    if (type === 'html') {
+    const typeValue = typeof type === 'object' ? type?.value : type;
+    if (typeValue === 'html') {
       return schema.required('form:error-html-code-required');
     }
     return schema;
