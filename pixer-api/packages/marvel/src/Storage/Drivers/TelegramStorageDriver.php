@@ -75,7 +75,7 @@ class TelegramStorageDriver extends BaseStorageDriver
             $settings->getLogger()
                 ->setType(\danog\MadelineProto\Logger::FILE_LOGGER)
                 ->setExtra(storage_path('logs/telegram.log'))
-                ->setLevel(\danog\MadelineProto\Logger::LOGGER);
+                ->setLevel(\danog\MadelineProto\Logger::NOTICE);
 
             \Log::info('[Telegram Init] Initializing API with session: ' . $this->sessionPath);
             $this->telegram = new API($this->sessionPath, $settings);
@@ -141,7 +141,7 @@ class TelegramStorageDriver extends BaseStorageDriver
             $settings->getLogger()
                 ->setType(\danog\MadelineProto\Logger::FILE_LOGGER)
                 ->setExtra(storage_path('logs/telegram.log'))
-                ->setLevel(\danog\MadelineProto\Logger::LOGGER);
+                ->setLevel(\danog\MadelineProto\Logger::NOTICE);
 
             \Log::info('[Telegram Auth] Initializing MadelineProto API...');
             $this->telegram = new API($this->sessionPath, $settings);
@@ -205,7 +205,7 @@ class TelegramStorageDriver extends BaseStorageDriver
             $settings->getLogger()
                 ->setType(\danog\MadelineProto\Logger::FILE_LOGGER)
                 ->setExtra(storage_path('logs/telegram.log'))
-                ->setLevel(\danog\MadelineProto\Logger::LOGGER);
+                ->setLevel(\danog\MadelineProto\Logger::NOTICE);
 
             \Log::info('[Telegram Verify] Initializing API...');
             $this->telegram = new API($this->sessionPath, $settings);
@@ -287,7 +287,7 @@ class TelegramStorageDriver extends BaseStorageDriver
             $settings->getLogger()
                 ->setType(\danog\MadelineProto\Logger::FILE_LOGGER)
                 ->setExtra(storage_path('logs/telegram.log'))
-                ->setLevel(\danog\MadelineProto\Logger::LOGGER);
+                ->setLevel(\danog\MadelineProto\Logger::NOTICE);
 
             \Log::info('[Telegram 2FA] Initializing API...');
             $this->telegram = new API($this->sessionPath, $settings);
