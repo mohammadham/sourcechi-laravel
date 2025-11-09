@@ -26,6 +26,7 @@ Route::prefix('storage')->group(function () {
     
     // Telegram Authentication Routes
     Route::prefix('telegram')->group(function () {
+        Route::post('/auth/check', [StorageController::class, 'telegramCheckAuth']);
         Route::post('/auth/start', [StorageController::class, 'telegramStartAuth']);
         Route::post('/auth/verify', [StorageController::class, 'telegramVerifyCode']);
         Route::post('/auth/2fa', [StorageController::class, 'telegramVerify2FA']);
