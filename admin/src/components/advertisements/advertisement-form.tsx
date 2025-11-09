@@ -143,12 +143,17 @@ export default function AdvertisementForm({ initialValues, onSubmit, loading }: 
       order: values.order,
     };
 
-    if (typeValue === 'html') {
-      input.html_code = values.html_code;
-    } else if (values.media) {
-      // Media can be either an Attachment object (from Uploader) or a File
-      input.media = values.media;
-    }
+if (typeValue === 'html') {
+  input.html_code = values.html_code;
+} else if (values.media) {
+  if (values.media instanceof File) {
+    // حالت اول: فایل خام
+    input.media = values.media;
+  } else if (values.media?.id) {
+    // حالت دوم: آبجکت Attachment از Uploader
+    input.media = values.media;
+  }
+}
 
     onSubmit(input);
   };
