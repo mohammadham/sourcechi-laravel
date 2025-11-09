@@ -17,7 +17,7 @@ import { usePositionDimensionsQuery } from '@/data/advertisements';
 import Alert from '@/components/ui/alert';
 import SwitchInput from '@/components/ui/switch-input';
 import * as yup from 'yup';
-
+import { Attachment } from '@/types';
 type FormValues = yup.InferType<typeof advertisementValidationSchema>;
 
 type IProps = {
@@ -149,9 +149,14 @@ if (typeValue === 'html') {
   if (values.media instanceof File) {
     // حالت اول: فایل خام
     input.media = values.media;
-  } else if (values.media?.id) {
+  } else if (
+    typeof values.media === 'object' &&
+    values.media !== null &&
+    'id' in values.media
+  ) {
     // حالت دوم: آبجکت Attachment از Uploader
-    input.media = values.media;
+    // input.media = values.media as any; // یا بهتره تایپ Attachment رو اینجا کست کنید
+    input.media = values.media as Attachment;
   }
 }
 

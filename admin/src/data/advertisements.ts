@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { toast } from 'react-toastify';
 import { API_ENDPOINTS } from './client/api-endpoints';
 import { advertisementClient } from './client/advertisement';
+import { Attachment } from '@/types';
 
 export interface Advertisement {
   id: number;
@@ -34,7 +35,7 @@ export interface AdvertisementInput {
   title: string;
   type: 'image' | 'video' | 'html';
   position: string;
-  media?: File | null;
+  media?: File | Attachment| null;
   html_code?: string;
   target_url?: string;
   open_in_new_tab?: boolean;
