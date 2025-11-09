@@ -156,24 +156,51 @@ export default function StorageSettingsForm({ settings }: IProps) {
   const telegramEnabled = watch('storage.drivers.telegram.enabled');
   const googleDriveEnabled = watch('storage.drivers.google_drive.enabled');
   const ftpEnabled = watch('storage.drivers.ftp.enabled');
+  
+  // Watch current selected values to ensure they're always in the list
+  const currentDefaultDriver = watch('storage.default_driver');
+  const currentImageDriver = watch('storage.type_mapping.image');
+  const currentVideoDriver = watch('storage.type_mapping.video');
+  const currentDigitalFileDriver = watch('storage.type_mapping.digital_file');
+  const currentDocumentDriver = watch('storage.type_mapping.document');
 
-  // Filter driver options to show only enabled drivers
+  // Filter driver options to show only enabled drivers + currently selected ones
   const driverOptions = useMemo(() => {
     // Local is always available
     const enabledDrivers = [allDriverOptions[0]];
     
-    if (telegramEnabled) {
+    // Collect currently selected drivers to ensure they're in the list
+    const selectedDrivers = new Set([
+      currentDefaultDriver,
+      currentImageDriver,
+      currentVideoDriver,
+      currentDigitalFileDriver,
+      currentDocumentDriver,
+    ]);
+    
+    // Add enabled drivers or currently selected ones
+    if (telegramEnabled || selectedDrivers.has('telegram')) {
       enabledDrivers.push(allDriverOptions[1]);
     }
-    if (googleDriveEnabled) {
+    if (googleDriveEnabled || selectedDrivers.has('google_drive')) {
       enabledDrivers.push(allDriverOptions[2]);
     }
-    if (ftpEnabled) {
+    if (ftpEnabled || selectedDrivers.has('ftp')) {
       enabledDrivers.push(allDriverOptions[3]);
     }
     
-    return enabledDrivers;
-  }, [telegramEnabled, googleDriveEnabled, ftpEnabled]);
+    // Remove duplicates based on value
+    return Array.from(new Map(enabledDrivers.map(item => [item.value, item])).values());
+  }, [
+    telegramEnabled, 
+    googleDriveEnabled, 
+    ftpEnabled,
+    currentDefaultDriver,
+    currentImageDriver,
+    currentVideoDriver,
+    currentDigitalFileDriver,
+    currentDocumentDriver,
+  ]);
 
   async function onSubmit(values: StorageFormValues) {
     updateSettingsMutation({
@@ -189,6 +216,7 @@ export default function StorageSettingsForm({ settings }: IProps) {
 
   // Telegram authentication handlers
   const handleTelegramStartAuth = async () => {
+    console.log('[Telegram Auth] Starting authentication process...');
     setTestingDriver('telegram');
     setTelegramAuthError('');
     setTestResult(null);
@@ -197,7 +225,15 @@ export default function StorageSettingsForm({ settings }: IProps) {
     const apiHash = watch('storage.drivers.telegram.api_hash');
     const phone = watch('storage.drivers.telegram.phone');
 
+    console.log('[Telegram Auth] Credentials check:', {
+      hasApiId: !!apiId,
+      hasApiHash: !!apiHash,
+      hasPhone: !!phone,
+      phone: phone ? `${phone.substring(0, 4)}****` : 'N/A',
+    });
+
     if (!apiId || !apiHash || !phone) {
+      console.error('[Telegram Auth] Missing required credentials');
       setTestResult({
         success: false,
         message: t('form:error-telegram-credentials-required'),
@@ -207,13 +243,23 @@ export default function StorageSettingsForm({ settings }: IProps) {
     }
 
     try {
+      console.log('[Telegram Auth] Sending auth request to backend...', {
+        endpoint: `${process.env.NEXT_PUBLIC_REST_API_ENDPOINT}/api/storage/telegram/auth/start`,
+      });
+
       const response = await apiClient.post('/api/storage/telegram/auth/start', {
         phone,
         api_id: apiId,
         api_hash: apiHash,
       });
 
+      console.log('[Telegram Auth] Backend response:', {
+        success: response.data.success,
+        hasData: !!response.data.data,
+      });
+
       if (response.data.success) {
+        console.log('[Telegram Auth] Code sent successfully, moving to code verification step');
         setTelegramAuthStep('code');
         setTelegramPhone(phone);
         setTelegramAuthData(response.data);
@@ -222,31 +268,47 @@ export default function StorageSettingsForm({ settings }: IProps) {
           message: t('form:telegram-code-sent'),
         });
       } else {
+        console.error('[Telegram Auth] Failed:', response.data.message);
         setTestResult({
           success: false,
           message: response.data.message,
         });
       }
     } catch (error: any) {
+      console.error('[Telegram Auth] Error occurred:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      
+      const errorMessage = error.response?.data?.message || error.message || t('form:error-telegram-auth-failed');
       setTestResult({
         success: false,
-        message: error.response?.data?.message || t('form:error-telegram-auth-failed'),
+        message: `خطا: ${errorMessage}`,
       });
     } finally {
       setTestingDriver(null);
+      console.log('[Telegram Auth] Authentication process completed');
     }
   };
 
   const handleTelegramVerifyCode = async () => {
+    console.log('[Telegram Verify] Starting code verification...');
     setTestingDriver('telegram');
     setTelegramAuthError('');
     setTestResult(null);
 
     if (!telegramCode) {
+      console.error('[Telegram Verify] Code is empty');
       setTelegramAuthError(t('form:error-code-required'));
       setTestingDriver(null);
       return;
     }
+
+    console.log('[Telegram Verify] Verifying code:', {
+      codeLength: telegramCode.length,
+      phone: telegramPhone ? `${telegramPhone.substring(0, 4)}****` : 'N/A',
+    });
 
     try {
       const response = await apiClient.post('/api/storage/telegram/auth/verify', {
@@ -254,14 +316,21 @@ export default function StorageSettingsForm({ settings }: IProps) {
         code: telegramCode,
       });
 
+      console.log('[Telegram Verify] Backend response:', {
+        success: response.data.success,
+        requires2FA: response.data.data?.requires_2fa,
+      });
+
       if (response.data.success) {
         if (response.data.data?.requires_2fa) {
+          console.log('[Telegram Verify] 2FA required, moving to 2FA step');
           setTelegramAuthStep('2fa');
           setTestResult({
             success: true,
             message: t('form:telegram-2fa-required'),
           });
         } else {
+          console.log('[Telegram Verify] Authentication successful');
           setTelegramAuthStep('authenticated');
           setTestResult({
             success: true,
@@ -269,25 +338,35 @@ export default function StorageSettingsForm({ settings }: IProps) {
           });
         }
       } else {
+        console.error('[Telegram Verify] Verification failed:', response.data.message);
         setTelegramAuthError(response.data.message);
       }
     } catch (error: any) {
+      console.error('[Telegram Verify] Error occurred:', {
+        message: error.message,
+        response: error.response?.data,
+      });
       setTelegramAuthError(error.response?.data?.message || t('form:error-verification-failed'));
     } finally {
       setTestingDriver(null);
+      console.log('[Telegram Verify] Code verification completed');
     }
   };
 
   const handleTelegramVerify2FA = async () => {
+    console.log('[Telegram 2FA] Starting 2FA verification...');
     setTestingDriver('telegram');
     setTelegramAuthError('');
     setTestResult(null);
 
     if (!telegram2FA) {
+      console.error('[Telegram 2FA] Password is empty');
       setTelegramAuthError(t('form:error-2fa-required'));
       setTestingDriver(null);
       return;
     }
+
+    console.log('[Telegram 2FA] Verifying 2FA password');
 
     try {
       const response = await apiClient.post('/api/storage/telegram/auth/2fa', {
@@ -295,23 +374,35 @@ export default function StorageSettingsForm({ settings }: IProps) {
         password: telegram2FA,
       });
 
+      console.log('[Telegram 2FA] Backend response:', {
+        success: response.data.success,
+      });
+
       if (response.data.success) {
+        console.log('[Telegram 2FA] 2FA verification successful');
         setTelegramAuthStep('authenticated');
         setTestResult({
           success: true,
           message: t('form:telegram-authenticated-successfully'),
         });
       } else {
+        console.error('[Telegram 2FA] Verification failed:', response.data.message);
         setTelegramAuthError(response.data.message);
       }
     } catch (error: any) {
+      console.error('[Telegram 2FA] Error occurred:', {
+        message: error.message,
+        response: error.response?.data,
+      });
       setTelegramAuthError(error.response?.data?.message || t('form:error-2fa-verification-failed'));
     } finally {
       setTestingDriver(null);
+      console.log('[Telegram 2FA] 2FA verification completed');
     }
   };
 
   const handleTelegramTestChannel = async () => {
+    console.log('[Telegram Channel Test] Starting channel test...');
     setTestingDriver('telegram');
     setTestResult(null);
 
@@ -320,7 +411,15 @@ export default function StorageSettingsForm({ settings }: IProps) {
     const phone = watch('storage.drivers.telegram.phone');
     const channelId = watch('storage.drivers.telegram.channel_id');
 
+    console.log('[Telegram Channel Test] Channel info:', {
+      channelId: channelId || 'N/A',
+      hasApiId: !!apiId,
+      hasApiHash: !!apiHash,
+      hasPhone: !!phone,
+    });
+
     if (!channelId) {
+      console.error('[Telegram Channel Test] Channel ID is missing');
       setTestResult({
         success: false,
         message: t('form:error-channel-id-required'),
@@ -330,6 +429,7 @@ export default function StorageSettingsForm({ settings }: IProps) {
     }
 
     try {
+      console.log('[Telegram Channel Test] Sending test request to backend...');
       const response = await apiClient.post('/api/storage/telegram/test-channel', {
         api_id: apiId,
         api_hash: apiHash,
@@ -337,14 +437,26 @@ export default function StorageSettingsForm({ settings }: IProps) {
         channel_id: channelId,
       });
 
+      console.log('[Telegram Channel Test] Backend response:', {
+        success: response.data.success,
+        message: response.data.message,
+      });
+
       setTestResult(response.data);
     } catch (error: any) {
+      console.error('[Telegram Channel Test] Error occurred:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      
       setTestResult({
         success: false,
         message: error.response?.data?.message || t('form:error-channel-test-failed'),
       });
     } finally {
       setTestingDriver(null);
+      console.log('[Telegram Channel Test] Channel test completed');
     }
   };
 
