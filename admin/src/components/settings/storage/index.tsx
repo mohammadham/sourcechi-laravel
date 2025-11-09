@@ -98,6 +98,7 @@ export default function StorageSettingsForm({ settings }: IProps) {
   const [telegramCode, setTelegramCode] = useState<string>('');
   const [telegram2FA, setTelegram2FA] = useState<string>('');
   const [telegramAuthError, setTelegramAuthError] = useState<string>('');
+  const [authCheckDone, setAuthCheckDone] = useState<boolean>(false);
 
   const {
     register,
@@ -169,14 +170,16 @@ export default function StorageSettingsForm({ settings }: IProps) {
   const currentDigitalFileDriver = watch('storage.type_mapping.digital_file');
   const currentDocumentDriver = watch('storage.type_mapping.document');
 
-  // Check telegram authentication status on mount and when credentials change
+  // Check telegram authentication status ONLY ONCE on mount
   useEffect(() => {
     const checkTelegramAuth = async () => {
-      if (!telegramEnabled || !telegramApiId || !telegramApiHash || !telegramPhoneWatch) {
+      // Only check if enabled and has credentials and hasn't been checked yet
+      if (!telegramEnabled || !telegramApiId || !telegramApiHash || !telegramPhoneWatch || authCheckDone) {
         return;
       }
       
-      console.log('[Telegram] Checking authentication status...');
+      console.log('[Telegram] Checking authentication status (one-time check)...');
+      setAuthCheckDone(true); // Mark as checked to prevent multiple calls
       
       try {
         const response = await apiClient.post('/api/storage/telegram/auth/check', {
@@ -201,22 +204,32 @@ export default function StorageSettingsForm({ settings }: IProps) {
       }
     };
     
+    // Only run once when component mounts and credentials are available
     checkTelegramAuth();
-  }, [telegramEnabled, telegramApiId, telegramApiHash, telegramPhoneWatch]);
+  }, [telegramEnabled]); // Only depend on telegramEnabled to run once when it becomes true
   
   // Filter driver options to show only enabled drivers + currently selected ones
   const driverOptions = useMemo(() => {
     // Local is always available
     const enabledDrivers = [allDriverOptions[0]];
     
-    // Collect currently selected drivers to ensure they're in the list
-    const selectedDrivers = new Set([
-      currentDefaultDriver,
-      currentImageDriver,
-      currentVideoDriver,
-      currentDigitalFileDriver,
-      currentDocumentDriver,
-    ]);
+    // Collect currently selected drivers to ensure they're in the list (filter out empty/undefined)
+    const selectedDrivers = new Set(
+      [
+        currentDefaultDriver,
+        currentImageDriver,
+        currentVideoDriver,
+        currentDigitalFileDriver,
+        currentDocumentDriver,
+      ].filter(Boolean) // Remove empty strings, undefined, null
+    );
+    
+    console.log('[Driver Options] Selected drivers:', Array.from(selectedDrivers));
+    console.log('[Driver Options] Enabled states:', { 
+      telegram: telegramEnabled, 
+      google_drive: googleDriveEnabled, 
+      ftp: ftpEnabled 
+    });
     
     // Add enabled drivers or currently selected ones
     if (telegramEnabled || selectedDrivers.has('telegram')) {
@@ -230,7 +243,10 @@ export default function StorageSettingsForm({ settings }: IProps) {
     }
     
     // Remove duplicates based on value
-    return Array.from(new Map(enabledDrivers.map(item => [item.value, item])).values());
+    const options = Array.from(new Map(enabledDrivers.map(item => [item.value, item])).values());
+    console.log('[Driver Options] Final options:', options.map(o => o.value));
+    
+    return options;
   }, [
     telegramEnabled, 
     googleDriveEnabled, 
@@ -567,8 +583,8 @@ export default function StorageSettingsForm({ settings }: IProps) {
               name="storage.default_driver"
               control={control}
               options={driverOptions}
-              getOptionLabel={(option: any) => option.label}
-              getOptionValue={(option: any) => option.value}
+              getOptionLabel={(option: any) => option?.label || ''}
+              getOptionValue={(option: any) => option?.value || ''}
             />
           </div>
         </Card>
@@ -589,8 +605,8 @@ export default function StorageSettingsForm({ settings }: IProps) {
               name="storage.type_mapping.image"
               control={control}
               options={driverOptions}
-              getOptionLabel={(option: any) => option.label}
-              getOptionValue={(option: any) => option.value}
+              getOptionLabel={(option: any) => option?.label || ''}
+              getOptionValue={(option: any) => option?.value || ''}
             />
           </div>
 
@@ -600,8 +616,8 @@ export default function StorageSettingsForm({ settings }: IProps) {
               name="storage.type_mapping.video"
               control={control}
               options={driverOptions}
-              getOptionLabel={(option: any) => option.label}
-              getOptionValue={(option: any) => option.value}
+              getOptionLabel={(option: any) => option?.label || ''}
+              getOptionValue={(option: any) => option?.value || ''}
             />
           </div>
 
@@ -611,8 +627,8 @@ export default function StorageSettingsForm({ settings }: IProps) {
               name="storage.type_mapping.digital_file"
               control={control}
               options={driverOptions}
-              getOptionLabel={(option: any) => option.label}
-              getOptionValue={(option: any) => option.value}
+              getOptionLabel={(option: any) => option?.label || ''}
+              getOptionValue={(option: any) => option?.value || ''}
             />
           </div>
 
@@ -622,8 +638,8 @@ export default function StorageSettingsForm({ settings }: IProps) {
               name="storage.type_mapping.document"
               control={control}
               options={driverOptions}
-              getOptionLabel={(option: any) => option.label}
-              getOptionValue={(option: any) => option.value}
+              getOptionLabel={(option: any) => option?.label || ''}
+              getOptionValue={(option: any) => option?.value || ''}
             />
           </div>
         </Card>
