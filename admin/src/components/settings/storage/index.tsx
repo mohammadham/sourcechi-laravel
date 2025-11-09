@@ -16,8 +16,17 @@ import { storageValidationSchema } from './storage-validation-schema';
 import { SaveIcon } from '@/components/icons/save';
 import { useConfirmRedirectIfDirty } from '@/utils/confirmed-redirect-if-dirty';
 import Alert from '@/components/ui/alert';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import axios from 'axios';
+
+// Create axios instance with baseURL
+const apiClient = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_REST_API_ENDPOINT,
+  timeout: 50000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
 type StorageFormValues = {
   storage: {
@@ -65,7 +74,7 @@ type IProps = {
   settings?: Settings | null;
 };
 
-const driverOptions = [
+const allDriverOptions = [
   { value: 'local', label: 'Local Storage' },
   { value: 'telegram', label: 'Telegram' },
   { value: 'google_drive', label: 'Google Drive' },
@@ -81,8 +90,14 @@ export default function StorageSettingsForm({ settings }: IProps) {
 
   const [testingDriver, setTestingDriver] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<any>(null);
-  const [telegramAuthStep, setTelegramAuthStep] = useState<'phone' | 'code' | '2fa' | 'done'>('phone');
+  
+  // Telegram authentication states
+  const [telegramAuthStep, setTelegramAuthStep] = useState<'idle' | 'phone' | 'code' | '2fa' | 'authenticated'>('idle');
   const [telegramAuthData, setTelegramAuthData] = useState<any>(null);
+  const [telegramPhone, setTelegramPhone] = useState<string>('');
+  const [telegramCode, setTelegramCode] = useState<string>('');
+  const [telegram2FA, setTelegram2FA] = useState<string>('');
+  const [telegramAuthError, setTelegramAuthError] = useState<string>('');
 
   const {
     register,
@@ -142,6 +157,24 @@ export default function StorageSettingsForm({ settings }: IProps) {
   const googleDriveEnabled = watch('storage.drivers.google_drive.enabled');
   const ftpEnabled = watch('storage.drivers.ftp.enabled');
 
+  // Filter driver options to show only enabled drivers
+  const driverOptions = useMemo(() => {
+    // Local is always available
+    const enabledDrivers = [allDriverOptions[0]];
+    
+    if (telegramEnabled) {
+      enabledDrivers.push(allDriverOptions[1]);
+    }
+    if (googleDriveEnabled) {
+      enabledDrivers.push(allDriverOptions[2]);
+    }
+    if (ftpEnabled) {
+      enabledDrivers.push(allDriverOptions[3]);
+    }
+    
+    return enabledDrivers;
+  }, [telegramEnabled, googleDriveEnabled, ftpEnabled]);
+
   async function onSubmit(values: StorageFormValues) {
     updateSettingsMutation({
       language: locale,
@@ -154,12 +187,185 @@ export default function StorageSettingsForm({ settings }: IProps) {
     reset(values, { keepValues: true });
   }
 
+  // Telegram authentication handlers
+  const handleTelegramStartAuth = async () => {
+    setTestingDriver('telegram');
+    setTelegramAuthError('');
+    setTestResult(null);
+
+    const apiId = watch('storage.drivers.telegram.api_id');
+    const apiHash = watch('storage.drivers.telegram.api_hash');
+    const phone = watch('storage.drivers.telegram.phone');
+
+    if (!apiId || !apiHash || !phone) {
+      setTestResult({
+        success: false,
+        message: t('form:error-telegram-credentials-required'),
+      });
+      setTestingDriver(null);
+      return;
+    }
+
+    try {
+      const response = await apiClient.post('/api/storage/telegram/auth/start', {
+        phone,
+        api_id: apiId,
+        api_hash: apiHash,
+      });
+
+      if (response.data.success) {
+        setTelegramAuthStep('code');
+        setTelegramPhone(phone);
+        setTelegramAuthData(response.data);
+        setTestResult({
+          success: true,
+          message: t('form:telegram-code-sent'),
+        });
+      } else {
+        setTestResult({
+          success: false,
+          message: response.data.message,
+        });
+      }
+    } catch (error: any) {
+      setTestResult({
+        success: false,
+        message: error.response?.data?.message || t('form:error-telegram-auth-failed'),
+      });
+    } finally {
+      setTestingDriver(null);
+    }
+  };
+
+  const handleTelegramVerifyCode = async () => {
+    setTestingDriver('telegram');
+    setTelegramAuthError('');
+    setTestResult(null);
+
+    if (!telegramCode) {
+      setTelegramAuthError(t('form:error-code-required'));
+      setTestingDriver(null);
+      return;
+    }
+
+    try {
+      const response = await apiClient.post('/api/storage/telegram/auth/verify', {
+        phone: telegramPhone,
+        code: telegramCode,
+      });
+
+      if (response.data.success) {
+        if (response.data.data?.requires_2fa) {
+          setTelegramAuthStep('2fa');
+          setTestResult({
+            success: true,
+            message: t('form:telegram-2fa-required'),
+          });
+        } else {
+          setTelegramAuthStep('authenticated');
+          setTestResult({
+            success: true,
+            message: t('form:telegram-authenticated-successfully'),
+          });
+        }
+      } else {
+        setTelegramAuthError(response.data.message);
+      }
+    } catch (error: any) {
+      setTelegramAuthError(error.response?.data?.message || t('form:error-verification-failed'));
+    } finally {
+      setTestingDriver(null);
+    }
+  };
+
+  const handleTelegramVerify2FA = async () => {
+    setTestingDriver('telegram');
+    setTelegramAuthError('');
+    setTestResult(null);
+
+    if (!telegram2FA) {
+      setTelegramAuthError(t('form:error-2fa-required'));
+      setTestingDriver(null);
+      return;
+    }
+
+    try {
+      const response = await apiClient.post('/api/storage/telegram/auth/2fa', {
+        phone: telegramPhone,
+        password: telegram2FA,
+      });
+
+      if (response.data.success) {
+        setTelegramAuthStep('authenticated');
+        setTestResult({
+          success: true,
+          message: t('form:telegram-authenticated-successfully'),
+        });
+      } else {
+        setTelegramAuthError(response.data.message);
+      }
+    } catch (error: any) {
+      setTelegramAuthError(error.response?.data?.message || t('form:error-2fa-verification-failed'));
+    } finally {
+      setTestingDriver(null);
+    }
+  };
+
+  const handleTelegramTestChannel = async () => {
+    setTestingDriver('telegram');
+    setTestResult(null);
+
+    const apiId = watch('storage.drivers.telegram.api_id');
+    const apiHash = watch('storage.drivers.telegram.api_hash');
+    const phone = watch('storage.drivers.telegram.phone');
+    const channelId = watch('storage.drivers.telegram.channel_id');
+
+    if (!channelId) {
+      setTestResult({
+        success: false,
+        message: t('form:error-channel-id-required'),
+      });
+      setTestingDriver(null);
+      return;
+    }
+
+    try {
+      const response = await apiClient.post('/api/storage/telegram/test-channel', {
+        api_id: apiId,
+        api_hash: apiHash,
+        phone,
+        channel_id: channelId,
+      });
+
+      setTestResult(response.data);
+    } catch (error: any) {
+      setTestResult({
+        success: false,
+        message: error.response?.data?.message || t('form:error-channel-test-failed'),
+      });
+    } finally {
+      setTestingDriver(null);
+    }
+  };
+
+  const handleTelegramAuthFlow = async () => {
+    if (telegramAuthStep === 'idle') {
+      await handleTelegramStartAuth();
+    } else if (telegramAuthStep === 'code') {
+      await handleTelegramVerifyCode();
+    } else if (telegramAuthStep === '2fa') {
+      await handleTelegramVerify2FA();
+    } else if (telegramAuthStep === 'authenticated') {
+      await handleTelegramTestChannel();
+    }
+  };
+
   const testDriver = async (driverName: string) => {
     setTestingDriver(driverName);
     setTestResult(null);
 
     try {
-      const response = await axios.post('/api/storage/test', {
+      const response = await apiClient.post('/api/storage/test', {
         driver: driverName,
       });
       setTestResult(response.data);
@@ -192,7 +398,8 @@ export default function StorageSettingsForm({ settings }: IProps) {
               name="storage.default_driver"
               control={control}
               options={driverOptions}
-              defaultValue={driverOptions[0]}
+              getOptionLabel={(option: any) => option.label}
+              getOptionValue={(option: any) => option.value}
             />
           </div>
         </Card>
@@ -213,6 +420,8 @@ export default function StorageSettingsForm({ settings }: IProps) {
               name="storage.type_mapping.image"
               control={control}
               options={driverOptions}
+              getOptionLabel={(option: any) => option.label}
+              getOptionValue={(option: any) => option.value}
             />
           </div>
 
@@ -222,6 +431,8 @@ export default function StorageSettingsForm({ settings }: IProps) {
               name="storage.type_mapping.video"
               control={control}
               options={driverOptions}
+              getOptionLabel={(option: any) => option.label}
+              getOptionValue={(option: any) => option.value}
             />
           </div>
 
@@ -231,6 +442,8 @@ export default function StorageSettingsForm({ settings }: IProps) {
               name="storage.type_mapping.digital_file"
               control={control}
               options={driverOptions}
+              getOptionLabel={(option: any) => option.label}
+              getOptionValue={(option: any) => option.value}
             />
           </div>
 
@@ -240,6 +453,8 @@ export default function StorageSettingsForm({ settings }: IProps) {
               name="storage.type_mapping.document"
               control={control}
               options={driverOptions}
+              getOptionLabel={(option: any) => option.label}
+              getOptionValue={(option: any) => option.value}
             />
           </div>
         </Card>
@@ -304,16 +519,147 @@ export default function StorageSettingsForm({ settings }: IProps) {
                 className="mb-5"
               />
 
+              {/* Telegram Authentication Flow */}
               <div className="mb-5">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => testDriver('telegram')}
-                  loading={testingDriver === 'telegram'}
-                  disabled={testingDriver !== null}
-                >
-                  {t('form:button-test-connection')}
-                </Button>
+                <Card className="p-4 bg-gray-50">
+                  <h4 className="text-sm font-semibold mb-3">
+                    {t('form:telegram-authentication-title')}
+                  </h4>
+
+                  {telegramAuthStep === 'idle' && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-3">
+                        {t('form:telegram-auth-step-1-description')}
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleTelegramStartAuth}
+                        loading={testingDriver === 'telegram'}
+                        disabled={testingDriver !== null}
+                      >
+                        {t('form:button-telegram-start-auth')}
+                      </Button>
+                    </div>
+                  )}
+
+                  {telegramAuthStep === 'code' && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-3">
+                        {t('form:telegram-auth-step-2-description')}
+                      </p>
+                      <Input
+                        label={t('form:input-label-telegram-code')}
+                        value={telegramCode}
+                        onChange={(e) => setTelegramCode(e.target.value)}
+                        placeholder="12345"
+                        variant="outline"
+                        className="mb-3"
+                        error={telegramAuthError}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleTelegramVerifyCode}
+                          loading={testingDriver === 'telegram'}
+                          disabled={testingDriver !== null}
+                        >
+                          {t('form:button-verify-code')}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setTelegramAuthStep('idle');
+                            setTelegramCode('');
+                            setTelegramAuthError('');
+                          }}
+                          disabled={testingDriver !== null}
+                        >
+                          {t('common:button-cancel')}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {telegramAuthStep === '2fa' && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-3">
+                        {t('form:telegram-auth-step-3-description')}
+                      </p>
+                      <Input
+                        label={t('form:input-label-telegram-2fa-password')}
+                        type="password"
+                        value={telegram2FA}
+                        onChange={(e) => setTelegram2FA(e.target.value)}
+                        placeholder="••••••••"
+                        variant="outline"
+                        className="mb-3"
+                        error={telegramAuthError}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleTelegramVerify2FA}
+                          loading={testingDriver === 'telegram'}
+                          disabled={testingDriver !== null}
+                        >
+                          {t('form:button-verify-2fa')}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setTelegramAuthStep('idle');
+                            setTelegram2FA('');
+                            setTelegramAuthError('');
+                          }}
+                          disabled={testingDriver !== null}
+                        >
+                          {t('common:button-cancel')}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {telegramAuthStep === 'authenticated' && (
+                    <div>
+                      <Alert
+                        message={t('form:telegram-authenticated-status')}
+                        variant="success"
+                        closeable={false}
+                        className="mb-3"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleTelegramTestChannel}
+                          loading={testingDriver === 'telegram'}
+                          disabled={testingDriver !== null}
+                        >
+                          {t('form:button-test-channel')}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setTelegramAuthStep('idle');
+                            setTelegramCode('');
+                            setTelegram2FA('');
+                            setTelegramAuthError('');
+                            setTestResult(null);
+                          }}
+                          disabled={testingDriver !== null}
+                        >
+                          {t('form:button-reset-auth')}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </Card>
               </div>
             </>
           )}
