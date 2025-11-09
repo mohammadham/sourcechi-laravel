@@ -46,7 +46,7 @@ class AdvertisementController extends CoreController
         try {
             $validatedData = $request->validated();
             
-            // Handle media upload if provided
+            // Handle media upload if file is provided
             if ($request->hasFile('media')) {
                 $file = $request->file('media');
                 $path = $file->store('advertisements', 'public');
@@ -61,7 +61,25 @@ class AdvertisementController extends CoreController
                         $validatedData['height'] = $imageSize[1];
                     }
                 }
+            } elseif ($request->input('media_url')) {
+                // If media_url is provided (from Uploader), use it directly
+                // The file is already uploaded to storage
+                $validatedData['media_url'] = $request->input('media_url');
+                
+                // Try to detect media type from URL
+                $extension = pathinfo($validatedData['media_url'], PATHINFO_EXTENSION);
+                $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                $videoExtensions = ['mp4', 'webm', 'ogg'];
+                
+                if (in_array(strtolower($extension), $imageExtensions)) {
+                    $validatedData['media_type'] = 'image/' . $extension;
+                } elseif (in_array(strtolower($extension), $videoExtensions)) {
+                    $validatedData['media_type'] = 'video/' . $extension;
+                }
             }
+            
+            // Remove media and media_url from validated data as they are processed
+            unset($validatedData['media']);
             
             $advertisement = $this->repository->create($validatedData);
             
@@ -108,7 +126,7 @@ class AdvertisementController extends CoreController
         try {
             $validatedData = $request->validated();
             
-            // Handle media upload if provided
+            // Handle media upload if file is provided
             if ($request->hasFile('media')) {
                 $file = $request->file('media');
                 $path = $file->store('advertisements', 'public');
@@ -123,7 +141,24 @@ class AdvertisementController extends CoreController
                         $validatedData['height'] = $imageSize[1];
                     }
                 }
+            } elseif ($request->input('media_url')) {
+                // If media_url is provided (from Uploader), use it directly
+                $validatedData['media_url'] = $request->input('media_url');
+                
+                // Try to detect media type from URL
+                $extension = pathinfo($validatedData['media_url'], PATHINFO_EXTENSION);
+                $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                $videoExtensions = ['mp4', 'webm', 'ogg'];
+                
+                if (in_array(strtolower($extension), $imageExtensions)) {
+                    $validatedData['media_type'] = 'image/' . $extension;
+                } elseif (in_array(strtolower($extension), $videoExtensions)) {
+                    $validatedData['media_type'] = 'video/' . $extension;
+                }
             }
+            
+            // Remove media from validated data as it's processed
+            unset($validatedData['media']);
             
             $advertisement = $this->repository->update($validatedData, $id);
             

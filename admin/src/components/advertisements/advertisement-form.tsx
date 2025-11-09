@@ -146,7 +146,8 @@ export default function AdvertisementForm({ initialValues, onSubmit, loading }: 
     if (typeValue === 'html') {
       input.html_code = values.html_code;
     } else if (values.media) {
-      input.media = values.media as File;
+      // Media can be either an Attachment object (from Uploader) or a File
+      input.media = values.media;
     }
 
     onSubmit(input);
@@ -205,7 +206,7 @@ export default function AdvertisementForm({ initialValues, onSubmit, loading }: 
             {(selectedType === 'image' || selectedType === 'video') && (
               <div className="mb-5">
                 <Label>
-                  {selectedType === 'image' ? t('form:input-label-image') : t('form:input-label-video')}
+                  {selectedType === 'image' ? t('form:input-label-image') : t('form:input-label-video')} {!initialValues && '*'}
                 </Label>
                 <FileInput
                   name="media"

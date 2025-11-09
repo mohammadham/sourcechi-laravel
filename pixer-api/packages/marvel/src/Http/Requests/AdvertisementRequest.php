@@ -49,21 +49,28 @@ class AdvertisementRequest extends FormRequest
         $type = $this->input('type');
         
         if ($type === 'image' || $type === 'video') {
-            // For create: media is required
-            // For update: media is optional (only if user wants to change it)
+            // Accept either media (file) or media_url (string)
+            // For create: at least one is required
+            // For update: both are optional
+            
             if ($isUpdate) {
                 $rules['media'] = ['nullable', 'file'];
+                $rules['media_url'] = ['nullable', 'string', 'max:2048'];
             } else {
-                $rules['media'] = ['required', 'file'];
+                // For create, require media OR media_url
+                $rules['media'] = ['nullable', 'file'];
+                $rules['media_url'] = ['nullable', 'string', 'max:2048'];
             }
             
-            // Add type-specific rules
-            if ($type === 'image') {
-                $rules['media'][] = 'mimes:jpg,jpeg,png,gif,webp';
-                $rules['media'][] = 'max:5120'; // 5MB
-            } else {
-                $rules['media'][] = 'mimes:mp4,webm,ogg';
-                $rules['media'][] = 'max:51200'; // 50MB
+            // Add type-specific rules for media file
+            if ($this->hasFile('media')) {
+                if ($type === 'image') {
+                    $rules['media'][] = 'mimes:jpg,jpeg,png,gif,webp';
+                    $rules['media'][] = 'max:5120'; // 5MB
+                } else {
+                    $rules['media'][] = 'mimes:mp4,webm,ogg';
+                    $rules['media'][] = 'max:51200'; // 50MB
+                }
             }
         }
 
@@ -72,6 +79,27 @@ class AdvertisementRequest extends FormRequest
         }
 
         return $rules;
+    }
+    
+    /**
+     * Configure the validator instance.
+     *
+     * @param  \Illuminate\Validation\Validator  $validator
+     * @return void
+     */
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $type = $this->input('type');
+            $isUpdate = $this->route('id') !== null;
+            
+            // For create with image/video type, ensure either media or media_url is provided
+            if (!$isUpdate && ($type === 'image' || $type === 'video')) {
+                if (!$this->hasFile('media') && !$this->input('media_url')) {
+                    $validator->errors()->add('media', 'انتخاب فایل یا URL الزامی است');
+                }
+            }
+        });
     }
 
     /**

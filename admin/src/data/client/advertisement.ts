@@ -27,7 +27,14 @@ export const advertisementClient = {
     formData.append('position', input.position);
     
     if (input.media) {
-      formData.append('media', input.media);
+      // Check if media is an Attachment object (from Uploader) or a File
+      if (typeof input.media === 'object' && 'original' in input.media) {
+        // It's an Attachment object, send the URL
+        formData.append('media_url', input.media.original);
+      } else {
+        // It's a File object, send the file
+        formData.append('media', input.media as any);
+      }
     }
     
     if (input.html_code) {
@@ -65,7 +72,14 @@ export const advertisementClient = {
     formData.append('position', input.position);
     
     if (input.media) {
-      formData.append('media', input.media);
+      // Check if media is an Attachment object (from Uploader) or a File
+      if (typeof input.media === 'object' && 'original' in input.media) {
+        // It's an Attachment object, send the URL
+        formData.append('media_url', input.media.original);
+      } else {
+        // It's a File object, send the file
+        formData.append('media', input.media as any);
+      }
     }
     
     if (input.html_code) {
