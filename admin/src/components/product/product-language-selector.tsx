@@ -28,8 +28,9 @@ export default function ProductLanguageSelector({
   const router = useRouter();
 
   // Get enabled languages from Config
-  const enabledLanguages = Config.enabledLanguages || Config.AVAILABLE_LANGUAGES || ['en', 'fa', 'de', 'ar'];
-
+  const enabledLanguages = Config.availableLanguages.length > 0 
+    ? Config.availableLanguages 
+    : ['en', 'fa', 'de', 'ar'];
   // Filter language configs to only show enabled languages
   const availableLanguages = LANGUAGE_CONFIGS.filter((lang) =>
     enabledLanguages.includes(lang.code)
