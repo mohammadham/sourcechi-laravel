@@ -75,6 +75,7 @@ export default function ProductLanguageSelector({
               <Checkbox
                 {...field}
                 id="all_languages"
+                name="all_languages"
                 label={
                   <div className="flex items-center gap-2">
                     <span className="text-lg">🌍</span>
@@ -125,6 +126,7 @@ export default function ProductLanguageSelector({
                     >
                       <Checkbox
                         id={`lang_${lang.code}`}
+                        name={`lang_${lang.code}`}
                         label={
                           <div>
                             <div className="font-medium">{lang.nativeName}</div>
