@@ -56,6 +56,7 @@ import { UpdateIcon } from '../icons/update';
 import { ProductDescriptionSuggestion } from '@/components/product/product-ai-prompt';
 import RichTextEditor from '@/components/ui/wysiwyg-editor/editor';
 import TooltipLabel from '@/components/ui/tooltip-label';
+import ProductLanguageSelector from '@/components/product/product-language-selector';
 
 type ProductFormProps = {
   initialValues?: Product | null;
@@ -389,6 +390,22 @@ export default function CreateOrUpdateProductForm({
               {/* <ProductManufacturerInput control={control} setValue={setValue} /> */}
               <ProductTagInput control={control} setValue={setValue} />
             </Card>
+          </div>
+
+          {/* Language Selector - Multi-language support */}
+          <div className="flex flex-wrap pb-8 my-5 border-b border-dashed border-border-base sm:my-8">
+            <Description
+              title={t('form:language-selector-title')}
+              details={t('form:language-selector-description')}
+              className="w-full px-0 pb-5 sm:w-4/12 sm:py-8 sm:pe-4 md:w-1/3 md:pe-5"
+            />
+
+            <div className="w-full sm:w-8/12 md:w-2/3">
+              <ProductLanguageSelector
+                control={control}
+                currentLanguage={locale as string}
+              />
+            </div>
           </div>
 
           <div className="flex flex-wrap my-5 sm:my-8">

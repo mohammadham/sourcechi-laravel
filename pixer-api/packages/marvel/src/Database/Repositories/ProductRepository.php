@@ -93,7 +93,9 @@ class ProductRepository extends BaseRepository
         'is_taxable',
         'shop_id',
         'sold_quantity',
-        'visibility'
+        'visibility',
+        'available_languages',
+        'all_languages'
     ];
     public function getProductDataArray(): array
     {
@@ -222,6 +224,19 @@ class ProductRepository extends BaseRepository
             if ($request->product_type == ProductType::SIMPLE) {
                 $data['max_price'] = $data['price'];
                 $data['min_price'] = $data['price'];
+            }
+
+            // Handle multi-language support
+            if (isset($request->all_languages) && $request->all_languages === true) {
+                $data['all_languages'] = true;
+                $data['available_languages'] = null; // Not needed when all_languages is true
+            } elseif (isset($request->available_languages) && is_array($request->available_languages)) {
+                $data['all_languages'] = false;
+                $data['available_languages'] = $request->available_languages;
+            } else {
+                // Default: use current language only
+                $data['all_languages'] = false;
+                $data['available_languages'] = [$request->language ?? DEFAULT_LANGUAGE];
             }
 
             $product = $this->create($data);
@@ -488,6 +503,15 @@ class ProductRepository extends BaseRepository
                         'slug' => $stringifySlug
                     ]);
                 }
+            }
+
+            // Handle multi-language support for update
+            if (isset($request['all_languages']) && $request['all_languages'] === true) {
+                $data['all_languages'] = true;
+                $data['available_languages'] = null;
+            } elseif (isset($request['available_languages']) && is_array($request['available_languages'])) {
+                $data['all_languages'] = false;
+                $data['available_languages'] = $request['available_languages'];
             }
 
             $product->update($data);

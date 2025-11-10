@@ -71,7 +71,8 @@ class ProductController extends CoreController
         $unavailableProducts = [];
         $language = $request->language ? $request->language : DEFAULT_LANGUAGE;
 
-        $products_query = $this->repository->where('language', $language);
+        // Use the new forLanguage scope to filter products
+        $products_query = $this->repository->forLanguage($language);
 
         if (isset($request->date_range)) {
             $dateRange = explode('//', $request->date_range);

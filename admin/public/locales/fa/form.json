@@ -857,5 +857,11 @@
   "error-2fa-required": "لطفاً رمز عبور دو مرحله‌ای را وارد کنید",
   "error-2fa-verification-failed": "تأیید رمز عبور ناموفق بود",
   "error-channel-id-required": "لطفاً شناسه کانال را وارد کنید",
-  "error-channel-test-failed": "تست کانال ناموفق بود"
+  "error-channel-test-failed": "تست کانال ناموفق بود",
+  "language-selector-title": "زبان‌های نمایش محصول",
+  "language-selector-description": "انتخاب کنید این محصول در کدام زبان‌ها نمایش داده شود",
+  "input-label-product-languages": "زبان‌های نمایش محصول",
+  "input-description-product-languages": "انتخاب کنید در کدام زبان‌ها این محصول نمایش داده شود",
+  "input-label-all-languages": "همه زبان‌ها",
+  "input-description-all-languages": "نمایش در تمام زبان‌های فعال (فعلی و آینده)"
 }

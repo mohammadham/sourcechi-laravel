@@ -36,6 +36,8 @@ class Product extends Model
         'image' => 'json',
         'gallery' => 'json',
         'video' => 'json',
+        'available_languages' => 'array',
+        'all_languages' => 'boolean',
     ];
 
     protected $appends = [
@@ -323,5 +325,49 @@ class Product extends Model
         }
         $this->setRelation('related_products', $relatedProducts);
         return $this;
+    }
+
+    /**
+     * Check if product is available in a specific language
+     *
+     * @param string $language Language code (e.g., 'fa', 'en')
+     * @return bool
+     */
+    public function isAvailableInLanguage(string $language): bool
+    {
+        // If all_languages is true, available in all languages
+        if ($this->all_languages) {
+            return true;
+        }
+
+        // If available_languages is set, check if language is in the array
+        if (!empty($this->available_languages) && is_array($this->available_languages)) {
+            return in_array($language, $this->available_languages);
+        }
+
+        // Backward compatibility: check the old 'language' field
+        return $this->language === $language;
+    }
+
+    /**
+     * Scope to filter products by language
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $language Language code
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeForLanguage($query, string $language)
+    {
+        return $query->where(function ($q) use ($language) {
+            // Products with all_languages = true
+            $q->where('all_languages', true)
+              // OR products with language in available_languages
+              ->orWhereRaw("JSON_CONTAINS(available_languages, ?)", [json_encode($language)])
+              // OR backward compatibility: old products with language field
+              ->orWhere(function ($subQ) use ($language) {
+                  $subQ->whereNull('available_languages')
+                       ->where('language', $language);
+              });
+        });
     }
 }

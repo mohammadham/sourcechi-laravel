@@ -854,8 +854,14 @@
   "error-telegram-auth-failed": "احراز هویت ناموفق بود",
   "error-code-required": "لطفاً کد تأیید را وارد کنید",
   "error-verification-failed": "تأیید کد ناموفق بود",
-  "error-2fa-required": "لطفاً رمز عبور دو مرحله‌ای را وارد کنید",
-  "error-2fa-verification-failed": "تأیید رمز عبور ناموفق بود",
-  "error-channel-id-required": "لطفاً شناسه کانال را وارد کنید",
-  "error-channel-test-failed": "تست کانال ناموفق بود"
+  "error-2fa-required": "Please enter 2FA password",
+  "error-2fa-verification-failed": "2FA verification failed",
+  "error-channel-id-required": "Please enter channel ID",
+  "error-channel-test-failed": "Channel test failed",
+  "language-selector-title": "Product Display Languages",
+  "language-selector-description": "Choose in which languages this product should be displayed",
+  "input-label-product-languages": "Product Display Languages",
+  "input-description-product-languages": "Select in which languages this product will be displayed",
+  "input-label-all-languages": "All Languages",
+  "input-description-all-languages": "Display in all active languages (current and future)"
 }
