@@ -11,8 +11,9 @@ import { Settings } from '@/types';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { storageValidationSchema } from './storage-validation-schema';
+import Select from '@/components/ui/select/select';
 import { SaveIcon } from '@/components/icons/save';
 import { useConfirmRedirectIfDirty } from '@/utils/confirmed-redirect-if-dirty';
 import Alert from '@/components/ui/alert';
@@ -163,13 +164,6 @@ export default function StorageSettingsForm({ settings }: IProps) {
   const telegramApiHash = watch('storage.drivers.telegram.api_hash');
   const telegramPhoneWatch = watch('storage.drivers.telegram.phone');
   
-  // Watch current selected values to ensure they're always in the list
-  const currentDefaultDriver = watch('storage.default_driver');
-  const currentImageDriver = watch('storage.type_mapping.image');
-  const currentVideoDriver = watch('storage.type_mapping.video');
-  const currentDigitalFileDriver = watch('storage.type_mapping.digital_file');
-  const currentDocumentDriver = watch('storage.type_mapping.document');
-
   // Check telegram authentication status ONLY ONCE on mount
   useEffect(() => {
     const checkTelegramAuth = async () => {
@@ -208,55 +202,32 @@ export default function StorageSettingsForm({ settings }: IProps) {
     checkTelegramAuth();
   }, [telegramEnabled]); // Only depend on telegramEnabled to run once when it becomes true
   
-  // Filter driver options to show only enabled drivers + currently selected ones
+  // Filter driver options - SIMPLIFIED: show enabled drivers only
+  // Local is always enabled by default
   const driverOptions = useMemo(() => {
-    // Local is always available
-    const enabledDrivers = [allDriverOptions[0]];
-    
-    // Collect currently selected drivers to ensure they're in the list (filter out empty/undefined)
-    const selectedDrivers = new Set(
-      [
-        currentDefaultDriver,
-        currentImageDriver,
-        currentVideoDriver,
-        currentDigitalFileDriver,
-        currentDocumentDriver,
-      ].filter(Boolean) // Remove empty strings, undefined, null
-    );
-    
-    console.log('[Driver Options] Selected drivers:', Array.from(selectedDrivers));
-    console.log('[Driver Options] Enabled states:', { 
-      telegram: telegramEnabled, 
-      google_drive: googleDriveEnabled, 
-      ftp: ftpEnabled 
+    console.log('[Driver Options] Building driver options...', {
+      telegram: telegramEnabled,
+      google_drive: googleDriveEnabled,
+      ftp: ftpEnabled,
     });
+
+    const options = [
+      allDriverOptions[0], // local - always available
+    ];
     
-    // Add enabled drivers or currently selected ones
-    if (telegramEnabled || selectedDrivers.has('telegram')) {
-      enabledDrivers.push(allDriverOptions[1]);
+    if (telegramEnabled) {
+      options.push(allDriverOptions[1]); // telegram
     }
-    if (googleDriveEnabled || selectedDrivers.has('google_drive')) {
-      enabledDrivers.push(allDriverOptions[2]);
+    if (googleDriveEnabled) {
+      options.push(allDriverOptions[2]); // google_drive
     }
-    if (ftpEnabled || selectedDrivers.has('ftp')) {
-      enabledDrivers.push(allDriverOptions[3]);
+    if (ftpEnabled) {
+      options.push(allDriverOptions[3]); // ftp
     }
     
-    // Remove duplicates based on value
-    const options = Array.from(new Map(enabledDrivers.map(item => [item.value, item])).values());
-    console.log('[Driver Options] Final options:', options.map(o => o.value));
-    
+    console.log('[Driver Options] Available drivers:', options.map(o => o.value));
     return options;
-  }, [
-    telegramEnabled, 
-    googleDriveEnabled, 
-    ftpEnabled,
-    currentDefaultDriver,
-    currentImageDriver,
-    currentVideoDriver,
-    currentDigitalFileDriver,
-    currentDocumentDriver,
-  ]);
+  }, [telegramEnabled, googleDriveEnabled, ftpEnabled]);
 
   async function onSubmit(values: StorageFormValues) {
     updateSettingsMutation({
@@ -579,12 +550,38 @@ export default function StorageSettingsForm({ settings }: IProps) {
         <Card className="w-full sm:w-8/12 md:w-2/3">
           <div className="mb-5">
             <Label>{t('form:input-label-default-storage-driver')}</Label>
-            <SelectInput
+            <Controller
               name="storage.default_driver"
               control={control}
-              options={driverOptions}
-              getOptionLabel={(option: any) => option?.label || ''}
-              getOptionValue={(option: any) => option?.value || ''}
+              render={({ field }) => {
+                // Ensure the value is always valid
+                const currentValue = field.value;
+                const isValueValid = driverOptions.some((opt: any) => opt.value === currentValue);
+                const safeValue = isValueValid ? currentValue : 'local';
+                
+                // Update form if value was invalid
+                if (!isValueValid && currentValue !== 'local') {
+                  console.log('[Driver Select] Invalid value detected, resetting to local:', currentValue);
+                  field.onChange('local');
+                }
+                
+                const selectedOption = driverOptions.find((opt: any) => opt.value === safeValue);
+                
+                return (
+                  <Select
+                    {...field}
+                    value={selectedOption}
+                    onChange={(option: any) => {
+                      console.log('[Driver Select] default_driver changed:', option?.value);
+                      field.onChange(option?.value || 'local');
+                    }}
+                    options={driverOptions}
+                    getOptionLabel={(option: any) => option?.label || ''}
+                    getOptionValue={(option: any) => option?.value || ''}
+                    placeholder={t('form:select-driver-placeholder')}
+                  />
+                );
+              }}
             />
           </div>
         </Card>
@@ -601,45 +598,141 @@ export default function StorageSettingsForm({ settings }: IProps) {
         <Card className="w-full sm:w-8/12 md:w-2/3">
           <div className="mb-5">
             <Label>{t('form:input-label-storage-image-driver')}</Label>
-            <SelectInput
+            <Controller
               name="storage.type_mapping.image"
               control={control}
-              options={driverOptions}
-              getOptionLabel={(option: any) => option?.label || ''}
-              getOptionValue={(option: any) => option?.value || ''}
+              render={({ field }) => {
+                const currentValue = field.value;
+                const isValueValid = driverOptions.some((opt: any) => opt.value === currentValue);
+                const safeValue = isValueValid ? currentValue : 'local';
+                
+                if (!isValueValid && currentValue !== 'local') {
+                  console.log('[Driver Select] Invalid image driver, resetting to local:', currentValue);
+                  field.onChange('local');
+                }
+                
+                const selectedOption = driverOptions.find((opt: any) => opt.value === safeValue);
+                
+                return (
+                  <Select
+                    {...field}
+                    value={selectedOption}
+                    onChange={(option: any) => {
+                      console.log('[Driver Select] image driver changed:', option?.value);
+                      field.onChange(option?.value || 'local');
+                    }}
+                    options={driverOptions}
+                    getOptionLabel={(option: any) => option?.label || ''}
+                    getOptionValue={(option: any) => option?.value || ''}
+                    placeholder={t('form:select-driver-placeholder')}
+                  />
+                );
+              }}
             />
           </div>
 
           <div className="mb-5">
             <Label>{t('form:input-label-storage-video-driver')}</Label>
-            <SelectInput
+            <Controller
               name="storage.type_mapping.video"
               control={control}
-              options={driverOptions}
-              getOptionLabel={(option: any) => option?.label || ''}
-              getOptionValue={(option: any) => option?.value || ''}
+              render={({ field }) => {
+                const currentValue = field.value;
+                const isValueValid = driverOptions.some((opt: any) => opt.value === currentValue);
+                const safeValue = isValueValid ? currentValue : 'local';
+                
+                if (!isValueValid && currentValue !== 'local') {
+                  console.log('[Driver Select] Invalid video driver, resetting to local:', currentValue);
+                  field.onChange('local');
+                }
+                
+                const selectedOption = driverOptions.find((opt: any) => opt.value === safeValue);
+                
+                return (
+                  <Select
+                    {...field}
+                    value={selectedOption}
+                    onChange={(option: any) => {
+                      console.log('[Driver Select] video driver changed:', option?.value);
+                      field.onChange(option?.value || 'local');
+                    }}
+                    options={driverOptions}
+                    getOptionLabel={(option: any) => option?.label || ''}
+                    getOptionValue={(option: any) => option?.value || ''}
+                    placeholder={t('form:select-driver-placeholder')}
+                  />
+                );
+              }}
             />
           </div>
 
           <div className="mb-5">
             <Label>{t('form:input-label-storage-digital-file-driver')}</Label>
-            <SelectInput
+            <Controller
               name="storage.type_mapping.digital_file"
               control={control}
-              options={driverOptions}
-              getOptionLabel={(option: any) => option?.label || ''}
-              getOptionValue={(option: any) => option?.value || ''}
+              render={({ field }) => {
+                const currentValue = field.value;
+                const isValueValid = driverOptions.some((opt: any) => opt.value === currentValue);
+                const safeValue = isValueValid ? currentValue : 'local';
+                
+                if (!isValueValid && currentValue !== 'local') {
+                  console.log('[Driver Select] Invalid digital_file driver, resetting to local:', currentValue);
+                  field.onChange('local');
+                }
+                
+                const selectedOption = driverOptions.find((opt: any) => opt.value === safeValue);
+                
+                return (
+                  <Select
+                    {...field}
+                    value={selectedOption}
+                    onChange={(option: any) => {
+                      console.log('[Driver Select] digital_file driver changed:', option?.value);
+                      field.onChange(option?.value || 'local');
+                    }}
+                    options={driverOptions}
+                    getOptionLabel={(option: any) => option?.label || ''}
+                    getOptionValue={(option: any) => option?.value || ''}
+                    placeholder={t('form:select-driver-placeholder')}
+                  />
+                );
+              }}
             />
           </div>
 
           <div className="mb-5">
             <Label>{t('form:input-label-storage-document-driver')}</Label>
-            <SelectInput
+            <Controller
               name="storage.type_mapping.document"
               control={control}
-              options={driverOptions}
-              getOptionLabel={(option: any) => option?.label || ''}
-              getOptionValue={(option: any) => option?.value || ''}
+              render={({ field }) => {
+                const currentValue = field.value;
+                const isValueValid = driverOptions.some((opt: any) => opt.value === currentValue);
+                const safeValue = isValueValid ? currentValue : 'local';
+                
+                if (!isValueValid && currentValue !== 'local') {
+                  console.log('[Driver Select] Invalid document driver, resetting to local:', currentValue);
+                  field.onChange('local');
+                }
+                
+                const selectedOption = driverOptions.find((opt: any) => opt.value === safeValue);
+                
+                return (
+                  <Select
+                    {...field}
+                    value={selectedOption}
+                    onChange={(option: any) => {
+                      console.log('[Driver Select] document driver changed:', option?.value);
+                      field.onChange(option?.value || 'local');
+                    }}
+                    options={driverOptions}
+                    getOptionLabel={(option: any) => option?.label || ''}
+                    getOptionValue={(option: any) => option?.value || ''}
+                    placeholder={t('form:select-driver-placeholder')}
+                  />
+                );
+              }}
             />
           </div>
         </Card>
