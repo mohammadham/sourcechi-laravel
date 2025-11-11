@@ -1,4 +1,5 @@
 import { useSettings } from '@/data/settings';
+import Image from 'next/image';
 
 interface EnamadBadgeProps {
   className?: string;
@@ -46,11 +47,14 @@ export default function EnamadBadge({
         className={`enamad-badge inline-block ${className}`}
         title="نماد اعتماد الکترونیکی"
       >
-        <img
+        <Image
           src="https://trustseal.enamad.ir/logo.aspx"
           alt="نماد اعتماد الکترونیکی"
+          width={100}
+          height={100}
           className="max-w-full h-auto"
           style={{ cursor: 'pointer' }}
+          unoptimized
         />
       </a>
     );

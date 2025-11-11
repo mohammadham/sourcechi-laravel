@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import cn from 'classnames';
+import Image from 'next/image';
 
 interface AdBannerProps {
   position: 'header' | 'sidebar' | 'footer' | 'between_products' | 'product_detail' | 'popup';
@@ -83,7 +84,7 @@ export default function AdBanner({ position, className, onLoaded }: AdBannerProp
         return (
           <div
             className={cn(
-              'ad-banner-container',
+              'ad-banner-container relative',
               currentAd.target_url && 'cursor-pointer',
               className
             )}
@@ -91,9 +92,11 @@ export default function AdBanner({ position, className, onLoaded }: AdBannerProp
             role={currentAd.target_url ? 'button' : undefined}
             tabIndex={currentAd.target_url ? 0 : undefined}
           >
-            <img
-              src={currentAd.media_url}
+            <Image
+              src={currentAd.media_url || ''}
               alt={currentAd.title}
+              width={currentAd.width || 1200}
+              height={currentAd.height || 400}
               className="w-full h-auto object-contain"
               loading="lazy"
             />

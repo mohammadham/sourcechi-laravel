@@ -22,6 +22,7 @@ module.exports = {
       'pickbazarlaravel.s3.ap-southeast-1.amazonaws.com',
       'srcchi.top',
       'srcchi.ir',
+      'trustseal.enamad.ir',
     ],
   },
   ...(process.env.APPLICATION_MODE === 'production' && {

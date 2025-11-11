@@ -18,12 +18,20 @@ function generateLocales() {
   return [process.env.NEXT_PUBLIC_DEFAULT_LANGUAGE];
 }
 
-module.exports = {
+const config = {
   i18n: {
     defaultLocale: process.env.NEXT_PUBLIC_DEFAULT_LANGUAGE ?? 'en',
     locales: generateLocales(),
-    localeDetection: isMultilangEnable,
   },
   localePath: path.resolve('./public/locales'),
   reloadOnPrerender: process.env.NODE_ENV === 'development',
 };
+
+// Only add localeDetection if multilang is enabled
+if (isMultilangEnable) {
+  config.i18n.localeDetection = true;
+} else {
+  config.i18n.localeDetection = false;
+}
+
+module.exports = config;
