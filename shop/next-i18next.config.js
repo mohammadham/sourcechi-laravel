@@ -28,10 +28,10 @@ const config = {
 };
 
 // Only add localeDetection if multilang is enabled
-if (isMultilangEnable) {
-  config.i18n.localeDetection = true;
-} else {
-  config.i18n.localeDetection = false;
-}
+// if (isMultilangEnable) {
+//   config.i18n.localeDetection = true;
+// } else {
+//   config.i18n.localeDetection = false;
+// }
 
 module.exports = config;
