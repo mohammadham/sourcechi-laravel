@@ -4,6 +4,7 @@ import cn from 'classnames';
 interface AdBannerProps {
   position: 'header' | 'sidebar' | 'footer' | 'between_products' | 'product_detail' | 'popup';
   className?: string;
+  onLoaded?: () => void;
 }
 
 interface Advertisement {
@@ -18,7 +19,7 @@ interface Advertisement {
   height?: number;
 }
 
-export default function AdBanner({ position, className }: AdBannerProps) {
+export default function AdBanner({ position, className, onLoaded }: AdBannerProps) {
   const [ads, setAds] = useState<Advertisement[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
@@ -30,9 +31,16 @@ export default function AdBanner({ position, className }: AdBannerProps) {
           `${process.env.NEXT_PUBLIC_REST_API_ENDPOINT}/advertisements/position/${position}`
         );
         const data = await response.json();
-        setAds(Array.isArray(data) ? data : []);
+        const adsArray = Array.isArray(data) ? data : [];
+        setAds(adsArray);
+        
+        console.log(`[AdBanner:${position}] Loaded ${adsArray.length} ads`);
+        
+        if (onLoaded && adsArray.length > 0) {
+          onLoaded();
+        }
       } catch (error) {
-        console.error('Failed to fetch advertisements:', error);
+        console.error(`[AdBanner:${position}] Failed to fetch advertisements:`, error);
         setAds([]);
       } finally {
         setLoading(false);
@@ -40,7 +48,7 @@ export default function AdBanner({ position, className }: AdBannerProps) {
     };
 
     fetchAds();
-  }, [position]);
+  }, [position, onLoaded]);
 
   // Rotate ads every 10 seconds if multiple ads exist
   useEffect(() => {
@@ -131,13 +139,15 @@ export default function AdBanner({ position, className }: AdBannerProps) {
   };
 
   // Position-specific styling
+  // Note: For 'popup' position, we don't add positioning classes
+  // because the parent (AdPopup) handles the overlay and positioning
   const positionClasses = {
     header: 'my-4 max-w-screen-xl mx-auto',
     sidebar: 'my-4',
     footer: 'my-4 max-w-screen-xl mx-auto',
     between_products: 'my-6 max-w-screen-xl mx-auto',
     product_detail: 'my-4',
-    popup: 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50',
+    popup: '', // Parent handles positioning for popup
   };
 
   return (
@@ -145,7 +155,7 @@ export default function AdBanner({ position, className }: AdBannerProps) {
       {renderAd()}
       
       {/* Indicators for multiple ads */}
-      {ads.length > 1 && (
+      {ads.length > 1 && position !== 'popup' && (
         <div className="flex justify-center gap-2 mt-2">
           {ads.map((_, index) => (
             <button
