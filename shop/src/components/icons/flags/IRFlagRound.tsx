@@ -1,6 +1,7 @@
-export const IRFlagRound = ({ width = '640px', height = '480px' }) => {
+export const IRFlagRound = ({ width = '32px', height = '32px' }) => {
   return (
-    <svg
+    
+<svg
   xmlns="http://www.w3.org/2000/svg"
   viewBox="482 846.5 300 172"
   width={width}
