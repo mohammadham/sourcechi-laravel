@@ -587,7 +587,9 @@ class TelegramStorageDriver extends BaseStorageDriver
             $messageId = null;
             $documentId = null;
             $uploadedSize = 0;
-            
+            // Extract file ID
+            $fileId = null;
+            $fileSize = 0;
             if (isset($messageMedia['updates'])) {
                 foreach ($messageMedia['updates'] as $update) {
                     if (isset($update['message'])) {
@@ -596,7 +598,9 @@ class TelegramStorageDriver extends BaseStorageDriver
                         if (isset($update['message']['media']['document'])) {
                             $document = $update['message']['media']['document'];
                             $documentId = $document['id'];
+                            $fileId = $document['id'];
                             $uploadedSize = $document['size'] ?? $fileSize;
+                            $fileSize = $update['message']['media']['document']['size'] ?? 0;
                         }
                         break;
                     }
@@ -612,8 +616,8 @@ class TelegramStorageDriver extends BaseStorageDriver
             
             // ⭐ metadata کامل برای دانلود
             return $this->successResponse('File uploaded to Telegram successfully', [
-                'file_id' => '',  // خالی - بعداً token تولید می‌شود
-                'url' => '',      // خالی - بعداً URL ایجاد می‌شود
+                'file_id' => $fileId,  // خالی - بعداً token تولید می‌شود
+                'url' => "telegram://file/{$fileId}",  // خالی - بعداً URL ایجاد می‌شود
                 'metadata' => [
                     'telegram_message_id' => $messageId,
                     'telegram_document_id' => $documentId,
