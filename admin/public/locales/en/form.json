@@ -881,5 +881,18 @@
   "refresh-cache-stats": "Refresh Statistics",
   "cache-cleared-successfully": "Cache cleared successfully",
   "error-fetching-cache-stats": "Error fetching cache statistics",
-  "error-clearing-cache": "Error clearing cache"
+  "error-clearing-cache": "Error clearing cache",
+  "storage-token-expiration-title": "Download Token Expiration",
+  "storage-token-expiration-help-text": "Configure expiration time for file download links",
+  "input-label-token-expiration-enabled": "Enable Expiration",
+  "token-expiration-enabled-help-text": "When enabled, download links will expire after the specified time and become unusable.",
+  "input-label-token-expiration-ttl": "Expiration Time (seconds)",
+  "token-expiration-ttl-help-text": "Time duration that download link remains valid (in seconds). After this period, the link expires.",
+  "token-expiration-examples": "Examples",
+  "hour": "hour",
+  "day": "day",
+  "days": "days",
+  "error-token-ttl-required": "Expiration time is required",
+  "error-token-ttl-min": "Expiration time must be at least 60 seconds (1 minute)",
+  "error-token-ttl-max": "Expiration time cannot exceed 31536000 seconds (1 year)"
 }

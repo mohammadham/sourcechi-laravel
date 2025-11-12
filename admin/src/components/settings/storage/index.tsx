@@ -39,6 +39,10 @@ type StorageFormValues = {
       digital_file: string;
       document: string;
     };
+    token_expiration: {
+      enabled: boolean;
+      default_ttl: number;
+    };
     drivers: {
       local: { enabled: boolean };
       telegram: {
@@ -121,6 +125,10 @@ export default function StorageSettingsForm({ settings }: IProps) {
           video: options?.storage?.type_mapping?.video ?? 'local',
           digital_file: options?.storage?.type_mapping?.digital_file ?? 'local',
           document: options?.storage?.type_mapping?.document ?? 'local',
+        },
+        token_expiration: {
+          enabled: options?.storage?.token_expiration?.enabled ?? false,
+          default_ttl: options?.storage?.token_expiration?.default_ttl ?? 86400,
         },
         drivers: {
           local: { enabled: true },
@@ -1107,6 +1115,53 @@ export default function StorageSettingsForm({ settings }: IProps) {
           />
         </div>
       )}
+
+      {/* Token Expiration Settings */}
+      <div className="flex flex-wrap pb-8 my-5 border-b border-dashed border-border-base">
+        <Description
+          title={t('form:storage-token-expiration-title')}
+          details={t('form:storage-token-expiration-help-text')}
+          className="w-full px-0 pb-5 sm:w-4/12 sm:py-8 sm:pr-4 md:w-1/3 md:pr-5"
+        />
+
+        <Card className="w-full sm:w-8/12 md:w-2/3">
+          <div className="mb-5">
+            <SwitchInput
+              control={control}
+              name="storage.token_expiration.enabled"
+              label={t('form:input-label-token-expiration-enabled')}
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              {t('form:token-expiration-enabled-help-text')}
+            </p>
+          </div>
+
+          {watch('storage.token_expiration.enabled') && (
+            <div className="mb-5">
+              <Input
+                label={t('form:input-label-token-expiration-ttl')}
+                {...register('storage.token_expiration.default_ttl')}
+                type="number"
+                variant="outline"
+                className="mb-4"
+                error={t(errors?.storage?.token_expiration?.default_ttl?.message as string)}
+              />
+              <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                <p>{t('form:token-expiration-ttl-help-text')}</p>
+                <p className="font-medium">
+                  {t('form:token-expiration-examples')}:
+                </p>
+                <ul className="list-disc list-inside ml-4">
+                  <li>3600 = 1 {t('form:hour')}</li>
+                  <li>86400 = 1 {t('form:day')}</li>
+                  <li>604800 = 7 {t('form:days')}</li>
+                  <li>2592000 = 30 {t('form:days')}</li>
+                </ul>
+              </div>
+            </div>
+          )}
+        </Card>
+      </div>
 
       {/* Cache Management */}
       <CacheManager />

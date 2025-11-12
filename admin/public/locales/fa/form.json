@@ -881,5 +881,18 @@
   "refresh-cache-stats": "بروزرسانی آمار",
   "cache-cleared-successfully": "حافظه نهان با موفقیت پاک شد",
   "error-fetching-cache-stats": "خطا در دریافت آمار حافظه نهان",
-  "error-clearing-cache": "خطا در پاک کردن حافظه نهان"
+  "error-clearing-cache": "خطا در پاک کردن حافظه نهان",
+  "storage-token-expiration-title": "زمان انقضای توکن دانلود",
+  "storage-token-expiration-help-text": "تنظیم زمان انقضا برای لینک‌های دانلود فایل‌ها",
+  "input-label-token-expiration-enabled": "فعال‌سازی زمان انقضا",
+  "token-expiration-enabled-help-text": "اگر فعال باشد، لینک‌های دانلود پس از مدت زمان مشخص منقضی می‌شوند و دیگر قابل استفاده نیستند.",
+  "input-label-token-expiration-ttl": "مدت زمان انقضا (ثانیه)",
+  "token-expiration-ttl-help-text": "مدت زمانی که لینک دانلود معتبر است (به ثانیه). پس از این مدت، لینک منقضی می‌شود.",
+  "token-expiration-examples": "مثال‌ها",
+  "hour": "ساعت",
+  "day": "روز",
+  "days": "روز",
+  "error-token-ttl-required": "مدت زمان انقضا الزامی است",
+  "error-token-ttl-min": "مدت زمان انقضا باید حداقل 60 ثانیه (1 دقیقه) باشد",
+  "error-token-ttl-max": "مدت زمان انقضا نمی‌تواند بیشتر از 31536000 ثانیه (1 سال) باشد"
 }

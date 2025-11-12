@@ -106,10 +106,18 @@ class AttachmentController extends CoreController
                 $attachment->save();
                 
                 // ⭐ تولید token با prefix مناسب
+                // Get expiration settings from config
+                $expiresIn = null;
+                $expirationConfig = config('shop.storage.token_expiration');
+                if ($expirationConfig['enabled'] ?? false) {
+                    $expiresIn = $expirationConfig['default_ttl'] ?? 86400;
+                }
+                
                 $storageToken = StorageToken::generate(
                     $attachment,
                     $uploadResult['driver'],
-                    $uploadResult['metadata']
+                    $uploadResult['metadata'],
+                    $expiresIn
                 );
                 
                 // ⭐ ساخت URL با token

@@ -31,7 +31,7 @@ apiClient.interceptors.request.use((config) => {
     } catch (error) {
       console.error('[Cache Manager] Failed to parse auth credentials:', error);
     }
-    }
+  }
   return config;
 });
 

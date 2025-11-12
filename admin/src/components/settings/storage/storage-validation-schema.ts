@@ -11,6 +11,19 @@ export const storageValidationSchema = yup.object().shape({
       document: yup.string().oneOf(['local', 'telegram', 'google_drive', 'ftp']),
     }),
     
+    token_expiration: yup.object().shape({
+      enabled: yup.boolean(),
+      default_ttl: yup.number().when('enabled', ([enabled], schema) => {
+        if (enabled === true) {
+          return schema
+            .required('form:error-token-ttl-required')
+            .min(60, 'form:error-token-ttl-min')
+            .max(31536000, 'form:error-token-ttl-max');
+        }
+        return schema;
+      }),
+    }),
+    
     drivers: yup.object().shape({
       telegram: yup.object().shape({
         enabled: yup.boolean(),

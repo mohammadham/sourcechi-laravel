@@ -156,6 +156,12 @@ return [
             'digital_file' => env('STORAGE_DIGITAL_FILE_DRIVER', 'local'),
             'document' => env('STORAGE_DOCUMENT_DRIVER', 'local'),
         ],
+        
+        // Token expiration settings
+        'token_expiration' => [
+            'enabled' => env('STORAGE_TOKEN_EXPIRATION_ENABLED', false),
+            'default_ttl' => env('STORAGE_TOKEN_DEFAULT_TTL', 86400), // 24 hours in seconds
+        ],
 
         'drivers' => [
             'local' => [
