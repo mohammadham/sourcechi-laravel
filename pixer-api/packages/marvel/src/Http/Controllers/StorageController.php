@@ -240,26 +240,118 @@ class StorageController extends CoreController
     public function telegramLogout(Request $request): JsonResponse
     {
         try {
-            $request->validate([
-                'phone' => 'required|string',
-            ]);
-
+            $phone = $request->input('phone');
+            
+            if (!$phone) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Phone number is required',
+                ], 400);
+            }
+            
             $driver = new TelegramStorageDriver();
-            $driver->initialize([
-                'phone' => $request->phone,
-                'api_id' => '',
-                'api_hash' => '',
-            ]);
-
+            
             $result = $driver->logout();
-
+            
             return response()->json($result);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Logout failed: ' . $e->getMessage(),
-            ], 400);
+                'message' => $e->getMessage(),
+            ], 500);
         }
+    }
+    
+    /**
+     * Clear Telegram cache
+     */
+    public function clearTelegramCache(Request $request): JsonResponse
+    {
+        try {
+            $olderThan = $request->input('older_than', 7);
+            $all = $request->input('all', false);
+            
+            // اجرای command
+            $command = $all 
+                ? 'telegram:clear-cache --all'
+                : "telegram:clear-cache --older-than={$olderThan}";
+            
+            \Artisan::call($command);
+            $output = \Artisan::output();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Cache cleared successfully',
+                'output' => trim($output),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    
+    /**
+     * Get cache statistics
+     */
+    public function getCacheStats(): JsonResponse
+    {
+        try {
+            $path = storage_path('app/cache/telegram');
+            
+            if (!is_dir($path)) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'total_files' => 0,
+                        'total_size' => 0,
+                        'total_size_formatted' => '0 B',
+                    ],
+                ]);
+            }
+            
+            $files = glob($path . '/*');
+            $totalSize = 0;
+            $totalFiles = 0;
+            
+            foreach ($files as $file) {
+                if (is_file($file)) {
+                    $totalSize += filesize($file);
+                    $totalFiles++;
+                }
+            }
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'total_files' => $totalFiles,
+                    'total_size' => $totalSize,
+                    'total_size_formatted' => $this->formatBytes($totalSize),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    
+    /**
+     * Format bytes to human readable
+     */
+    private function formatBytes(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $i = 0;
+        
+        while ($bytes >= 1024 && $i < count($units) - 1) {
+            $bytes /= 1024;
+            $i++;
+        }
+        
+        return round($bytes, 2) . ' ' . $units[$i];
     }
 
     /**

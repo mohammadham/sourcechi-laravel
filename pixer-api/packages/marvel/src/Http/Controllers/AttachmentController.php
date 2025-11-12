@@ -263,22 +263,65 @@ class AttachmentController extends CoreController
     private function downloadFromLocal(StorageToken $token)
     {
         $attachment = $token->attachment;
+        
+        // روش 1: استفاده از Spatie Media Library (روش اصلی)
         $media = $attachment->getFirstMedia();
         
-        if (!$media) {
-            abort(404, 'File not found in storage');
+        if ($media) {
+            $path = $media->getPath();
+            
+            if (file_exists($path)) {
+                Log::info("[Local] Serving from Media Library: {$path}");
+                
+                return response()->download($path, $media->file_name, [
+                    'Content-Type' => $media->mime_type,
+                    'Cache-Control' => 'public, max-age=31536000',  // 1 year
+                    'X-Storage-Method' => 'media-library',
+                ]);
+            }
         }
         
-        $path = $media->getPath();
+        // روش 2: Fallback - سیستم قدیمی (برای backward compatibility)
+        // اگر فایل در media library نبود، شاید در metadata باشد
+        $metadata = $token->metadata;
         
-        if (!file_exists($path)) {
-            abort(404, 'Physical file not found');
+        if (isset($metadata['path'])) {
+            $oldPath = $metadata['path'];
+            
+            // تلاش برای پیدا کردن فایل
+            if (file_exists($oldPath)) {
+                Log::info("[Local] Serving from old path (fallback): {$oldPath}");
+                
+                $fileName = $metadata['original_name'] ?? basename($oldPath);
+                $mimeType = $metadata['mime_type'] ?? mime_content_type($oldPath);
+                
+                return response()->download($oldPath, $fileName, [
+                    'Content-Type' => $mimeType,
+                    'Cache-Control' => 'public, max-age=31536000',
+                    'X-Storage-Method' => 'legacy-path',
+                ]);
+            }
         }
         
-        return response()->download($path, $media->file_name, [
-            'Content-Type' => $media->mime_type,
-            'Cache-Control' => 'public, max-age=31536000',  // 1 year
-        ]);
+        // روش 3: تلاش برای پیدا کردن در storage/app/public
+        $publicPath = storage_path('app/public/attachments/' . $attachment->id);
+        if (is_dir($publicPath)) {
+            $files = glob($publicPath . '/*');
+            if (!empty($files)) {
+                $file = $files[0];
+                Log::info("[Local] Serving from public storage (fallback): {$file}");
+                
+                return response()->download($file, basename($file), [
+                    'Content-Type' => mime_content_type($file),
+                    'Cache-Control' => 'public, max-age=31536000',
+                    'X-Storage-Method' => 'public-storage',
+                ]);
+            }
+        }
+        
+        // هیچ فایلی پیدا نشد
+        Log::error("[Local] File not found for attachment: {$attachment->id}, token: {$token->token}");
+        abort(404, 'File not found in any storage location');
     }
     
     /**

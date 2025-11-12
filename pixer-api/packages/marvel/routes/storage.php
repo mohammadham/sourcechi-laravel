@@ -40,6 +40,12 @@ Route::prefix('storage')->group(function () {
         Route::post('/logout', [StorageController::class, 'telegramLogout']);
     });
     
+    // Cache Management Routes
+    Route::prefix('cache')->middleware(['auth:sanctum', 'role:super_admin'])->group(function () {
+        Route::get('/stats', [StorageController::class, 'getCacheStats']);
+        Route::post('/clear-telegram', [StorageController::class, 'clearTelegramCache']);
+    });
+    
     // Google Drive OAuth Routes
     Route::prefix('google-drive')->group(function () {
         Route::post('/auth-url', [StorageController::class, 'googleDriveAuthUrl']);
