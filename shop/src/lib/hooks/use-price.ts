@@ -11,12 +11,26 @@ export function formatPrice({
   currencyCode: string;
   locale: string;
 }) {
+  // تشخیص تعداد رقم اعشار بر اساس مقدار
+  // اگر عدد صحیح است، اعشار نمایش نده
+  const fractionDigits = amount % 1 === 0 ? 0 : 2;
+
   const formatCurrency = new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: currencyCode,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   });
 
-  return formatCurrency.format(amount);
+  let formattedPrice = formatCurrency.format(amount);
+
+  // جایگزینی IRR با \"ریال\" در زبان فارسی
+  if (currencyCode === 'IRR' && locale === 'fa') {
+    // IRR ممکن است به صورت ﷼ (نماد ریال) یا IRR نمایش داده شود
+    formattedPrice = formattedPrice.replace(/IRR|﷼/g, 'ریال');
+  }
+
+  return formattedPrice;
 }
 
 export function formatVariantPrice({

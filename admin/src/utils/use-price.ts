@@ -12,14 +12,30 @@ export function formatPrice({
   locale: string;
   fractions: number;
 }) {
+  // تشخیص اینکه آیا عدد صحیح است یا نه
+  const shouldHideDecimals = amount % 1 === 0;
+  
+  // اگر عدد صحیح است، اعشار را نمایش نده
+  const actualFractions = shouldHideDecimals 
+    ? 0 
+    : (fractions > 20 || fractions < 0 || !fractions ? 2 : fractions);
+
   const formatCurrency = new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: currencyCode,
-    maximumFractionDigits:
-      fractions > 20 || fractions < 0 || !fractions ? 2 : fractions,
+    minimumFractionDigits: actualFractions,
+    maximumFractionDigits: actualFractions,
   });
 
-  return formatCurrency.format(amount);
+  let formattedPrice = formatCurrency.format(amount);
+
+  // جایگزینی IRR با \"ریال\" در زبان فارسی
+  if (currencyCode === 'IRR' && locale === 'fa') {
+    // IRR ممکن است به صورت ﷼ (نماد ریال) یا IRR نمایش داده شود
+    formattedPrice = formattedPrice.replace(/IRR|﷼/g, 'ریال');
+  }
+
+  return formattedPrice;
 }
 
 export function formatVariantPrice({
