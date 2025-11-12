@@ -41,7 +41,7 @@ Route::prefix('storage')->group(function () {
     });
     
     // Cache Management Routes
-    Route::prefix('cache')->middleware(['auth:sanctum', 'role:super_admin'])->group(function () {
+    Route::prefix('cache')->middleware(['auth:sanctum'])->group(function () {
         Route::get('/stats', [StorageController::class, 'getCacheStats']);
         Route::post('/clear-telegram', [StorageController::class, 'clearTelegramCache']);
     });

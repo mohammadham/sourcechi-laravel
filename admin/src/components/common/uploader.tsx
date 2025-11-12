@@ -38,7 +38,9 @@ export default function Uploader({
     ...(!acceptFile
       ? {
           accept: {
-            'image/*': ['.jpg', '.jpeg', '.png', '.webp'],
+            'image/png': ['.png'],
+            'image/jpeg': ['.jpg', '.jpeg'],
+            'image/webp': ['.webp'],
           },
         }
       : { ...ACCEPTED_FILE_TYPES }),
@@ -241,7 +243,9 @@ export default function Uploader({
                 {t('text-upload-highlight')}
               </span>{' '}
               {t('text-upload-message')} <br />
-              <span className="text-xs text-body">{t('text-img-format')}</span>
+              <span className="text-xs text-body">
+                {acceptFile ? t('text-img-format') : 'PNG, JPG, JPEG, WEBP'}
+              </span>
             </>
           )}
         </p>

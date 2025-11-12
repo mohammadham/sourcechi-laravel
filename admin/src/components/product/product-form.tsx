@@ -123,6 +123,8 @@ export default function CreateOrUpdateProductForm({
   } = methods;
 
   const upload_max_filesize = options?.server_info?.upload_max_filesize / 1024;
+  // Convert to bytes (MB * 1024 * 1024)
+  const maxFileSizeInBytes = upload_max_filesize ? upload_max_filesize * 1024 * 1024 : 5 * 1024 * 1024;
 
   const { mutate: createProduct, isLoading: creating } =
     useCreateProductMutation();
@@ -265,6 +267,8 @@ export default function CreateOrUpdateProductForm({
       {t('form:featured-image-help-text')} <br />
       {t('form:size-help-text')} &nbsp;
       <span className="font-bold">{upload_max_filesize} MB </span>
+      <br />
+      <span className="text-xs text-muted">{t('form:accepted-formats')}: PNG, JPG, JPEG, WEBP</span>
     </span>
   );
 
@@ -273,6 +277,8 @@ export default function CreateOrUpdateProductForm({
       {t('form:gallery-help-text')} <br />
       {t('form:size-help-text')} &nbsp;
       <span className="font-bold">{upload_max_filesize} MB </span>
+      <br />
+      <span className="text-xs text-muted">{t('form:accepted-formats')}: PNG, JPG, JPEG, WEBP</span>
     </span>
   );
 
@@ -297,7 +303,12 @@ export default function CreateOrUpdateProductForm({
             />
 
             <Card className="w-full sm:w-8/12 md:w-2/3">
-              <FileInput name="image" control={control} multiple={false} />
+              <FileInput 
+                name="image" 
+                control={control} 
+                multiple={false}
+                maxSize={maxFileSizeInBytes}
+              />
               {/* {errors.image?.message && (
                 <p className="my-2 text-xs text-red-500">
                   {t(errors?.image?.message!)}
@@ -314,7 +325,11 @@ export default function CreateOrUpdateProductForm({
             />
 
             <Card className="w-full sm:w-8/12 md:w-2/3">
-              <FileInput name="gallery" control={control} />
+              <FileInput 
+                name="gallery" 
+                control={control}
+                maxSize={maxFileSizeInBytes}
+              />
             </Card>
           </div>
 
@@ -514,8 +529,8 @@ export default function CreateOrUpdateProductForm({
               className="w-full px-0 pb-5 sm:w-4/12 sm:py-8 sm:pr-4 md:w-1/3 md:pr-5"
             />
 
-						<ProductTypeInput />
-					</div> */}
+                                                <ProductTypeInput />
+                                        </div> */}
 
           <ProductSimpleForm initialValues={initialValues} settings={options} />
 

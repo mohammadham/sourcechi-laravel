@@ -132,12 +132,12 @@ export function getProductDefaultValues(
       (option) => product_type === option.value,
     ),
     ...(product_type === ProductType.Simple && {
-      ...(is_digital && {
+      ...(is_digital && digital_file && {
         digital_file_input: {
-          id: digital_file?.attachment_id,
+          id: digital_file?.attachment_id || digital_file?.id,
           thumbnail: digital_file?.url,
           original: digital_file?.url,
-          // file_name: digital_file?.file_name,
+          file_name: digital_file?.file_name,
         },
       }),
     }),

@@ -86,18 +86,20 @@ export const productValidationSchema = yup.object().shape({
     }),
   ),
   is_digital: yup.boolean(),
-  digital_file_input: yup.object().when('is_external', {
-    is: false,
-    then: () =>
-      yup.object().shape({
-        id: yup.string(),
-        original: yup.string().required(),
-      }),
-    otherwise: () =>
-      yup.object().shape({
+  digital_file_input: yup.object().when(['is_digital', 'is_external'], {
+    is: (is_digital: boolean, is_external: boolean) => is_digital && !is_external,
+    then: (schema) =>
+      schema.shape({
+        id: yup.string().required('Digital file is required'),
+        original: yup.string().notRequired(),
+        thumbnail: yup.string().notRequired(),
+      }).required('Digital file is required'),
+    otherwise: (schema) =>
+      schema.shape({
         id: yup.string().notRequired(),
         original: yup.string().notRequired(),
-      }),
+        thumbnail: yup.string().notRequired(),
+      }).notRequired().nullable(),
   }),
   video: yup.array().of(
     yup.object().shape({
