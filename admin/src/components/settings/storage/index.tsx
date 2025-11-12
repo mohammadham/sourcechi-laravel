@@ -19,6 +19,7 @@ import { useConfirmRedirectIfDirty } from '@/utils/confirmed-redirect-if-dirty';
 import Alert from '@/components/ui/alert';
 import { useState, useMemo, useEffect } from 'react';
 import axios from 'axios';
+import CacheManager from './cache-manager';
 
 // Create axios instance with baseURL
 const apiClient = axios.create({
@@ -1106,6 +1107,9 @@ export default function StorageSettingsForm({ settings }: IProps) {
           />
         </div>
       )}
+
+      {/* Cache Management */}
+      <CacheManager />
 
       <StickyFooterPanel className="z-0">
         <Button
