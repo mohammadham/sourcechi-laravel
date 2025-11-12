@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Marvel\Http\Controllers\StorageController;
+use Marvel\Http\Controllers\AttachmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,6 +14,11 @@ use Marvel\Http\Controllers\StorageController;
 */
 
 Route::prefix('storage')->group(function () {
+    
+    // ⭐ Download file by token (Public - تک endpoint برای همه drivers)
+    Route::get('/download/{token}', [AttachmentController::class, 'download'])
+        ->name('storage.download')
+        ->where('token', '[a-z]{2}_[a-f0-9\-]{36}');
     
     // Get all drivers info
     Route::get('/', [StorageController::class, 'index']);

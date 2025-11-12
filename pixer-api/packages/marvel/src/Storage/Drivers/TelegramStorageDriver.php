@@ -562,6 +562,11 @@ class TelegramStorageDriver extends BaseStorageDriver
                 return $this->errorResponse('Channel ID not configured');
             }
             
+            $mimeType = mime_content_type($filePath);
+            $fileSize = filesize($filePath);
+            
+            \Log::info("[Telegram Upload] Starting upload: {$fileName} ({$fileSize} bytes)");
+            
             // Upload file
             $messageMedia = $this->telegram->messages->sendMedia([
                 'peer' => $channelId,
@@ -575,63 +580,174 @@ class TelegramStorageDriver extends BaseStorageDriver
                         ],
                     ],
                 ],
-                'message' => 'File: ' . $fileName,
+                'message' => 'File: ' . $fileName . ' | Size: ' . $this->formatBytes($fileSize),
             ]);
             
-            // Extract file ID
-            $fileId = null;
-            $fileSize = 0;
+            // Extract important info: message_id + document_id
+            $messageId = null;
+            $documentId = null;
+            $uploadedSize = 0;
             
             if (isset($messageMedia['updates'])) {
                 foreach ($messageMedia['updates'] as $update) {
-                    if (isset($update['message']['media']['document'])) {
-                        $fileId = $update['message']['media']['document']['id'];
-                        $fileSize = $update['message']['media']['document']['size'] ?? 0;
+                    if (isset($update['message'])) {
+                        $messageId = $update['message']['id'];  // ⭐ کلیدی برای دانلود!
+                        
+                        if (isset($update['message']['media']['document'])) {
+                            $document = $update['message']['media']['document'];
+                            $documentId = $document['id'];
+                            $uploadedSize = $document['size'] ?? $fileSize;
+                        }
                         break;
                     }
                 }
             }
             
-            if (!$fileId) {
-                return $this->errorResponse('Failed to upload file to Telegram');
+            if (!$messageId) {
+                \Log::error("[Telegram Upload] Failed to extract message ID");
+                return $this->errorResponse('Failed to upload: No message ID received');
             }
             
+            \Log::info("[Telegram Upload] Success: message_id={$messageId}, document_id={$documentId}");
+            
+            // ⭐ metadata کامل برای دانلود
             return $this->successResponse('File uploaded to Telegram successfully', [
-                'file_id' => $fileId,
-                'url' => "telegram://file/{$fileId}",
+                'file_id' => '',  // خالی - بعداً token تولید می‌شود
+                'url' => '',      // خالی - بعداً URL ایجاد می‌شود
                 'metadata' => [
-                    'size' => $fileSize,
-                    'channel_id' => $channelId,
-                    'file_name' => $fileName,
+                    'telegram_message_id' => $messageId,
+                    'telegram_document_id' => $documentId,
+                    'telegram_channel_id' => $channelId,
+                    'telegram_file_size' => $uploadedSize,
+                    'telegram_mime_type' => $mimeType,
+                    'original_name' => $fileName,
+                    'uploaded_at' => now()->toDateTimeString(),
                 ],
             ]);
         } catch (\Exception $e) {
+            \Log::error("[Telegram Upload] Exception: {$e->getMessage()}", [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
             return $this->errorResponse('Upload failed: ' . $e->getMessage());
         }
     }
+    
+    /**
+     * Format bytes to human readable
+     */
+    private function formatBytes(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $i = 0;
+        
+        while ($bytes >= 1024 && $i < count($units) - 1) {
+            $bytes /= 1024;
+            $i++;
+        }
+        
+        return round($bytes, 2) . ' ' . $units[$i];
+    }
 
     /**
-     * Download file from Telegram
+     * Download file from Telegram (deprecated - use downloadByMessageId)
      */
     public function download(string $fileId, string $localPath): array
+    {
+        // این متد deprecated است - از downloadByMessageId استفاده کنید
+        return $this->errorResponse('Method deprecated. Use downloadByMessageId() instead.');
+    }
+    
+    /**
+     * Download file by message ID (روش جدید)
+     * 
+     * @param int $messageId Message ID in channel
+     * @param string $channelId Channel ID or username
+     * @param string $localPath Local path to save file
+     * @return array
+     */
+    public function downloadByMessageId(int $messageId, string $channelId, string $localPath): array
     {
         try {
             if (!$this->initializeTelegram()) {
                 return $this->errorResponse('Not authenticated');
             }
             
-            // Download file by ID
-            $this->telegram->downloadToFile($fileId, $localPath);
+            \Log::info("[Telegram] Downloading message: {$messageId} from channel: {$channelId}");
+            
+            // دریافت پیام
+            $messages = $this->telegram->channels->getMessages([
+                'channel' => $channelId,
+                'id' => [$messageId],
+            ]);
+            
+            if (empty($messages['messages'])) {
+                \Log::error("[Telegram] Message not found: {$messageId}");
+                return $this->errorResponse('Message not found');
+            }
+            
+            $message = $messages['messages'][0];
+            $document = $message['media']['document'] ?? null;
+            
+            if (!$document) {
+                \Log::error("[Telegram] No document in message: {$messageId}");
+                return $this->errorResponse('Document not found in message');
+            }
+            
+            // دانلود
+            $this->telegram->downloadToFile($document, $localPath);
             
             if (file_exists($localPath)) {
+                $size = filesize($localPath);
+                \Log::info("[Telegram] Download successful: {$localPath} ({$size} bytes)");
+                
                 return $this->successResponse('File downloaded successfully', [
                     'path' => $localPath,
+                    'size' => $size,
                 ]);
             }
             
             return $this->errorResponse('Download failed: File not created');
         } catch (\Exception $e) {
+            \Log::error("[Telegram] Download exception: {$e->getMessage()}");
             return $this->errorResponse('Download failed: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Stream to output (برای فایل‌های بزرگ)
+     * 
+     * @param int $messageId Message ID in channel
+     * @param string $channelId Channel ID or username
+     * @return bool
+     */
+    public function streamToOutput(int $messageId, string $channelId): bool
+    {
+        try {
+            if (!$this->initializeTelegram()) {
+                return false;
+            }
+            
+            \Log::info("[Telegram] Streaming message: {$messageId}");
+            
+            $messages = $this->telegram->channels->getMessages([
+                'channel' => $channelId,
+                'id' => [$messageId],
+            ]);
+            
+            $document = $messages['messages'][0]['media']['document'] ?? null;
+            
+            if (!$document) {
+                return false;
+            }
+            
+            // Stream مستقیم به output
+            $this->telegram->downloadToStream($document, 'php://output');
+            
+            return true;
+        } catch (\Exception $e) {
+            \Log::error("[Telegram] Stream exception: {$e->getMessage()}");
+            return false;
         }
     }
 

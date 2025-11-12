@@ -7,10 +7,14 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\Attachment;
+use Marvel\Database\Models\StorageToken;
 use Marvel\Database\Repositories\AttachmentRepository;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\AttachmentRequest;
 use Marvel\Storage\StorageManager;
+use Marvel\Storage\StorageTokenManager;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Prettus\Validator\Exceptions\ValidatorException;
 
 
@@ -85,10 +89,22 @@ class AttachmentController extends CoreController
             $attachment->storage_metadata = $uploadResult['metadata'] ?? [];
             $attachment->save();
             
+            // ⭐ تولید token با prefix مناسب
+            $storageToken = StorageToken::generate(
+                $attachment,
+                $uploadResult['driver'],
+                $uploadResult['metadata']
+            );
+            
+            // ⭐ ساخت URL با token
+            $downloadUrl = route('storage.download', ['token' => $storageToken->token]);
+            
+            Log::info("[Upload] Token generated: {$storageToken->token} -> {$downloadUrl}");
+            
             // Build response
             $converted_url = [
-                'thumbnail' => $uploadResult['url'] ?? '',
-                'original' => $uploadResult['url'] ?? '',
+                'thumbnail' => $downloadUrl,
+                'original' => $downloadUrl,
                 'id' => $attachment->id,
                 'storage_driver' => $uploadResult['driver'],
                 'file_type' => $fileType,
@@ -164,52 +180,229 @@ class AttachmentController extends CoreController
     }
 
     /**
-     * Download file from storage
-     *
-     * @param Request $request
-     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse|JsonResponse
+     * Download file by token (تک endpoint برای همه drivers)
+     * 
+     * Route: GET /storage/download/{token}
      */
-    public function download(Request $request)
+    public function download(string $token)
     {
         try {
-            $id = $request->input('id');
-            $attachment = $this->repository->findOrFail($id);
-            
-            // For local storage, use media library
-            if ($attachment->storage_driver === 'local') {
-                $media = $attachment->getMedia()->first();
-                if ($media) {
-                    return response()->download($media->getPath());
-                }
+            // 1. سریع‌ترین بررسی: فرمت token
+            if (!StorageTokenManager::isValidFormat($token)) {
+                abort(400, 'Invalid token format');
             }
             
-            // For other drivers, download from storage
-            $metadata = $attachment->getStorageMetadata();
-            $fileId = $metadata['file_id'] ?? null;
+            // 2. شناسایی driver از prefix (بدون database)
+            $driverName = StorageTokenManager::getDriverFromToken($token);
+            Log::info("[Download] Token prefix detected: {$driverName}");
             
-            if (!$fileId) {
-                throw new MarvelException('File ID not found');
+            // 3. Query database برای token
+            $storageToken = StorageToken::where('token', $token)
+                ->with('attachment')  // Eager load
+                ->firstOrFail();
+            
+            // 4. بررسی انقضا
+            if ($storageToken->isExpired()) {
+                abort(410, 'Download link has expired');
             }
             
-            $tempPath = storage_path('app/temp/' . uniqid() . '_' . ($metadata['name'] ?? 'file'));
-            
-            $downloadResult = $this->storageManager->download(
-                $fileId,
-                $tempPath,
-                $attachment->storage_driver
-            );
-            
-            if (!$downloadResult['success']) {
-                throw new MarvelException($downloadResult['message']);
+            // 5. بررسی تطابق driver (امنیت اضافه)
+            if (!$storageToken->validateDriverMatch()) {
+                Log::error("[Download] Driver mismatch for token: {$token}");
+                abort(400, 'Invalid token');
             }
             
-            return response()->download($tempPath)->deleteFileAfterSend(true);
+            // 6. Increment download count (async)
+            $storageToken->recordDownload();
+            
+            // 7. هدایت به driver مناسب
+            return $this->downloadFromDriver($storageToken);
+            
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            abort(404, 'File not found');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 400);
+            Log::error('[Download] Error: ' . $e->getMessage(), [
+                'token' => $token,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            abort(500, 'Download failed');
         }
+    }
+    
+    /**
+     * Route به driver مناسب (هسته سیستم میانه‌جی)
+     */
+    private function downloadFromDriver(StorageToken $token)
+    {
+        $driver = $token->driver;
+        
+        Log::info("[Download] Routing to driver: {$driver}");
+        
+        switch ($driver) {
+            case 'local':
+                return $this->downloadFromLocal($token);
+            
+            case 'telegram':
+                return $this->downloadFromTelegram($token);
+            
+            case 'google_drive':
+                return $this->downloadFromGoogleDrive($token);
+            
+            case 'ftp':
+                return $this->downloadFromFTP($token);
+            
+            default:
+                Log::error("[Download] Unsupported driver: {$driver}");
+                abort(400, 'Unsupported storage driver');
+        }
+    }
+    
+    /**
+     * Download from Local storage
+     */
+    private function downloadFromLocal(StorageToken $token)
+    {
+        $attachment = $token->attachment;
+        $media = $attachment->getFirstMedia();
+        
+        if (!$media) {
+            abort(404, 'File not found in storage');
+        }
+        
+        $path = $media->getPath();
+        
+        if (!file_exists($path)) {
+            abort(404, 'Physical file not found');
+        }
+        
+        return response()->download($path, $media->file_name, [
+            'Content-Type' => $media->mime_type,
+            'Cache-Control' => 'public, max-age=31536000',  // 1 year
+        ]);
+    }
+    
+    /**
+     * Download from Telegram (Hybrid: Cache + Stream)
+     */
+    private function downloadFromTelegram(StorageToken $token)
+    {
+        $metadata = $token->metadata;
+        $fileSize = $metadata['telegram_file_size'] ?? 0;
+        
+        // استراتژی Hybrid:
+        // فایل‌های کوچک (<10MB): Cache
+        // فایل‌های بزرگ (>10MB): Stream
+        
+        if ($fileSize < 10 * 1024 * 1024) {
+            Log::info("[Telegram] Using cached download (file size: {$fileSize})");
+            return $this->cachedTelegramDownload($token, $metadata);
+        }
+        
+        Log::info("[Telegram] Using streaming download (file size: {$fileSize})");
+        return $this->streamTelegramDownload($token, $metadata);
+    }
+    
+    /**
+     * Cached Telegram download (برای فایل‌های کوچک)
+     */
+    private function cachedTelegramDownload(StorageToken $token, array $metadata)
+    {
+        $cacheKey = "telegram_file_{$token->id}";
+        $cachePath = storage_path("app/cache/telegram/{$token->token}");
+        
+        // بررسی cache
+        if (Cache::has($cacheKey) && file_exists($cachePath)) {
+            Log::info("[Telegram] Serving from cache: {$token->token}");
+            
+            return response()->download($cachePath, $metadata['original_name'], [
+                'Content-Type' => $metadata['telegram_mime_type'] ?? 'application/octet-stream',
+                'Cache-Control' => 'public, max-age=86400',  // 24 hours
+                'X-Cache-Status' => 'HIT',
+            ])->deleteFileAfterSend(false);  // حفظ فایل cache
+        }
+        
+        // دانلود از تلگرام
+        Log::info("[Telegram] Downloading from Telegram: {$token->token}");
+        
+        $driver = $this->storageManager->driver('telegram');
+        
+        // ایجاد دایرکتوری cache
+        $directory = dirname($cachePath);
+        if (!is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
+        
+        // دانلود به cache
+        $result = $driver->downloadByMessageId(
+            $metadata['telegram_message_id'],
+            $metadata['telegram_channel_id'],
+            $cachePath
+        );
+        
+        if (!$result['success']) {
+            Log::error("[Telegram] Download failed: {$result['message']}");
+            abort(500, 'Failed to download file from Telegram');
+        }
+        
+        // Cache برای 24 ساعت
+        Cache::put($cacheKey, true, now()->addDay());
+        
+        Log::info("[Telegram] File cached successfully: {$token->token}");
+        
+        return response()->download($cachePath, $metadata['original_name'], [
+            'Content-Type' => $metadata['telegram_mime_type'] ?? 'application/octet-stream',
+            'Cache-Control' => 'public, max-age=86400',
+            'X-Cache-Status' => 'MISS',
+        ])->deleteFileAfterSend(false);
+    }
+    
+    /**
+     * Streaming Telegram download (برای فایل‌های بزرگ)
+     */
+    private function streamTelegramDownload(StorageToken $token, array $metadata)
+    {
+        $driver = $this->storageManager->driver('telegram');
+        
+        Log::info("[Telegram] Starting stream: {$token->token}");
+        
+        return response()->stream(
+            function() use ($driver, $metadata) {
+                $success = $driver->streamToOutput(
+                    $metadata['telegram_message_id'],
+                    $metadata['telegram_channel_id']
+                );
+                
+                if (!$success) {
+                    Log::error("[Telegram] Stream failed");
+                }
+            },
+            200,
+            [
+                'Content-Type' => $metadata['telegram_mime_type'] ?? 'application/octet-stream',
+                'Content-Disposition' => 'attachment; filename="' . $metadata['original_name'] . '"',
+                'Content-Length' => $metadata['telegram_file_size'] ?? 0,
+                'Cache-Control' => 'public, max-age=3600',
+                'X-Stream-Mode' => 'DIRECT',
+            ]
+        );
+    }
+    
+    /**
+     * Download from Google Drive
+     */
+    private function downloadFromGoogleDrive(StorageToken $token)
+    {
+        // پیاده‌سازی مشابه...
+        abort(501, 'Google Drive download not implemented yet');
+    }
+    
+    /**
+     * Download from FTP
+     */
+    private function downloadFromFTP(StorageToken $token)
+    {
+        // پیاده‌سازی مشابه...
+        abort(501, 'FTP download not implemented yet');
     }
 
     /**
