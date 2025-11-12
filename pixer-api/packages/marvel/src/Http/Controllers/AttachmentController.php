@@ -56,69 +56,97 @@ class AttachmentController extends CoreController
             $mimeType = $media->getMimeType();
             $fileType = $this->determineFileType($mimeType);
             
-            // Get original filename
+            // Get original filename and temp path
             $originalName = $media->getClientOriginalName();
+            $tempPath = $media->getRealPath();
             
-            // Create attachment record first
-            $attachment = new Attachment();
-            $attachment->file_type = $fileType;
-            $attachment->save();
+            // ⭐ Track temp file for cleanup
+            $tempFileToCleanup = null;
             
-            // Upload using storage manager
-            $uploadResult = $this->storageManager->upload(
-                $media->getRealPath(),
-                $originalName,
-                $fileType
-            );
-            
-            if (!$uploadResult['success']) {
-                // Fallback to local storage with Spatie Media Library
-                $attachment->addMedia($media)->toMediaCollection();
-                $attachment->storage_driver = 'local';
+            try {
+                // Create attachment record first
+                $attachment = new Attachment();
+                $attachment->file_type = $fileType;
                 $attachment->save();
                 
-                foreach ($attachment->getMedia() as $mediaItem) {
-                    $converted_url = $this->buildMediaResponse($mediaItem, $attachment);
-                    $urls[] = $converted_url;
+                Log::info("[Upload] Starting upload for: {$originalName}", [
+                    'temp_path' => $tempPath,
+                    'file_size' => filesize($tempPath),
+                    'mime_type' => $mimeType,
+                ]);
+                
+                // Upload using storage manager
+                $uploadResult = $this->storageManager->upload(
+                    $tempPath,
+                    $originalName,
+                    $fileType
+                );
+                
+                // ⭐ Mark temp file for cleanup if not local driver
+                if ($uploadResult['success'] && $uploadResult['driver'] !== 'local') {
+                    $tempFileToCleanup = $tempPath;
                 }
-                continue;
-            }
-            
-            // Update attachment with storage info
-            $attachment->storage_driver = $uploadResult['driver'];
-            $attachment->storage_metadata = $uploadResult['metadata'] ?? [];
-            $attachment->save();
-            
-            // ⭐ تولید token با prefix مناسب
-            $storageToken = StorageToken::generate(
-                $attachment,
-                $uploadResult['driver'],
-                $uploadResult['metadata']
-            );
-            
-            // ⭐ ساخت URL با token
-            $downloadUrl = route('storage.download', ['token' => $storageToken->token]);
-            
-            Log::info("[Upload] Token generated: {$storageToken->token} -> {$downloadUrl}");
-            
-            // Build response
-            $converted_url = [
-                'thumbnail' => $downloadUrl,
-                'original' => $downloadUrl,
-                'id' => $attachment->id,
-                'storage_driver' => $uploadResult['driver'],
-                'file_type' => $fileType,
-            ];
-            
-            // For images, try to use media library for thumbnail
-            if (strpos($mimeType, 'image/') !== false && $uploadResult['driver'] === 'local') {
-                $attachment->addMedia($media)->toMediaCollection();
-                foreach ($attachment->getMedia() as $mediaItem) {
-                    $converted_url['thumbnail'] = $mediaItem->getUrl('thumbnail');
+                
+                if (!$uploadResult['success']) {
+                    // Fallback to local storage with Spatie Media Library
+                    $attachment->addMedia($media)->toMediaCollection();
+                    $attachment->storage_driver = 'local';
+                    $attachment->save();
+                    
+                    foreach ($attachment->getMedia() as $mediaItem) {
+                        $converted_url = $this->buildMediaResponse($mediaItem, $attachment);
+                        $urls[] = $converted_url;
+                    }
+                    continue;
+                }
+                
+                // Update attachment with storage info
+                $attachment->storage_driver = $uploadResult['driver'];
+                $attachment->storage_metadata = $uploadResult['metadata'] ?? [];
+                $attachment->save();
+                
+                // ⭐ تولید token با prefix مناسب
+                $storageToken = StorageToken::generate(
+                    $attachment,
+                    $uploadResult['driver'],
+                    $uploadResult['metadata']
+                );
+                
+                // ⭐ ساخت URL با token
+                $downloadUrl = route('storage.download', ['token' => $storageToken->token]);
+                
+                Log::info("[Upload] Token generated: {$storageToken->token} -> {$downloadUrl}");
+                
+                // Build response
+                $converted_url = [
+                    'thumbnail' => $downloadUrl,
+                    'original' => $downloadUrl,
+                    'id' => $attachment->id,
+                    'storage_driver' => $uploadResult['driver'],
+                    'file_type' => $fileType,
+                ];
+                
+                // For images, try to use media library for thumbnail
+                if (strpos($mimeType, 'image/') !== false && $uploadResult['driver'] === 'local') {
+                    $attachment->addMedia($media)->toMediaCollection();
+                    foreach ($attachment->getMedia() as $mediaItem) {
+                        $converted_url['thumbnail'] = $mediaItem->getUrl('thumbnail');
+                    }
+                }
+                
+                $urls[] = $converted_url;
+                
+            } finally {
+                // ⭐ Cleanup: پاک کردن فایل موقت برای driver های غیر local
+                if ($tempFileToCleanup && file_exists($tempFileToCleanup)) {
+                    $deleted = @unlink($tempFileToCleanup);
+                    Log::info("[Upload Cleanup] Temp file removed", [
+                        'file' => $tempFileToCleanup,
+                        'success' => $deleted,
+                        'file_exists_after' => file_exists($tempFileToCleanup),
+                    ]);
                 }
             }
-            
-            $urls[] = $converted_url;
         }
         
         return $urls;
