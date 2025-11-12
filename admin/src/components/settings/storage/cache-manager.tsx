@@ -19,10 +19,19 @@ const apiClient = axios.create({
 
 // Add auth token to requests
 apiClient.interceptors.request.use((config) => {
-  const token = Cookies.get(AUTH_CRED);
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  const authCred = Cookies.get(AUTH_CRED);
+  if (authCred) {
+    try {
+      // Parse the JSON string to get the token
+      const credentials = JSON.parse(authCred);
+      const token = credentials?.token;
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (error) {
+      console.error('[Cache Manager] Failed to parse auth credentials:', error);
+    }
+    }
   return config;
 });
 
