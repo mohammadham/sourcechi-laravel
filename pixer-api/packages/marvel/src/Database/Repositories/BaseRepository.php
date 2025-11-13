@@ -243,6 +243,18 @@ abstract class BaseRepository extends Repository implements CacheableInterface
 
     public function findBySlugOrId(int | string $value, string $language = DEFAULT_LANGUAGE)
     {
+        // Check if the model has the forLanguage scope (for multi-language support)
+        $hasForLanguageScope = method_exists($this->model(), 'scopeForLanguage');
+
+        if ($hasForLanguageScope) {
+            // Use the forLanguage scope for models that support it (like Product)
+            return match (true) {
+                is_numeric($value) => $this->where('id', $value)->forLanguage($language)->firstOrFail(),
+                is_string($value)  => $this->where('slug', $value)->forLanguage($language)->firstOrFail(),
+            };
+        }
+
+        // Fallback to old behavior for models without forLanguage scope
         return match (true) {
             is_numeric($value) => $this->where('id', $value)->where('language', $language)->firstOrFail(),
             is_string($value)  => $this->where('slug', $value)->where('language', $language)->firstOrFail(),
