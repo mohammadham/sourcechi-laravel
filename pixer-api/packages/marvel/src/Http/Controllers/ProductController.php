@@ -160,7 +160,10 @@ class ProductController extends CoreController
             $language = $request->language ?? DEFAULT_LANGUAGE;
             $user = $request->user();
             $limit = isset($request->limit) ? $request->limit : 10;
-            $product = $this->repository->where('language', $language)->where('slug', $slug)->orWhere('id', $slug)->firstOrFail();
+            // $product = $this->repository->where('language', $language)->where('slug', $slug)->orWhere('id', $slug)->firstOrFail();
+            
+            // Use findBySlugOrId which supports multi-language products
+            $product = $this->repository->findBySlugOrId($slug, $language);
             if (
                 in_array('variation_options.digital_file', explode(';', $request->with)) || in_array('digital_file', explode(';', $request->with))
             ) {

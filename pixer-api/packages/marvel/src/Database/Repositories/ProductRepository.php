@@ -608,7 +608,9 @@ class ProductRepository extends BaseRepository
             $product    = $this->findOneByFieldOrFail('slug', $slug);
             $categories = $product->categories->pluck('id');
 
-            return $this->where('language', $language)->whereHas('categories', function ($query) use ($categories) {
+            // return $this->where('language', $language)->whereHas('categories', function ($query) use ($categories) {
+            // Use forLanguage scope to support multi-language products
+            return $this->forLanguage($language)->whereHas('categories', function ($query) use ($categories) {
                 $query->whereIn('categories.id', $categories);
             })->with('type')->limit($limit)->get();
         } catch (Exception $e) {
