@@ -21,6 +21,8 @@ class ProductResource extends Resource
             'type'                 => getResourceData($this->type, ['settings']), // if you need extra data then pass key in array by second parameter
             'language'             => $this->language,
             'translated_languages' => $this->translated_languages,
+            'available_languages'  => $this->available_languages, // New: for multi-language support
+            'all_languages'        => $this->all_languages, // New: for multi-language support
             'product_type'         => $this->product_type,
             'shop'                 => getResourceData($this->shop, []), // if you need extra data then pass key in array by second parameter
             'sale_price'           => $this->sale_price,
