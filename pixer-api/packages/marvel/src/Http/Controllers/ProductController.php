@@ -66,7 +66,7 @@ class ProductController extends CoreController
      * @param  mixed $request
      * @return object
      */
-    public function fetchProducts(Request $request)
+     public function fetchProducts(Request $request)
     {
         $unavailableProducts = [];
         $language = $request->language ? $request->language : DEFAULT_LANGUAGE;
@@ -85,6 +85,83 @@ class ProductController extends CoreController
 
         if ($request->flash_sale_builder) {
             $products_query = $this->repository->processFlashSaleProducts($request, $products_query);
+        }
+
+        // Apply filters from request
+        // Filter by tags
+        if ($request->has('tags')) {
+            $tags = is_array($request->tags) ? $request->tags : explode(',', $request->tags);
+            $products_query = $products_query->whereHas('tags', function ($q) use ($tags) {
+                $q->whereIn('slug', $tags);
+            });
+        }
+
+        // Filter by categories
+        if ($request->has('categories')) {
+            $categories = is_array($request->categories) ? $request->categories : explode(',', $request->categories);
+            $products_query = $products_query->whereHas('categories', function ($q) use ($categories) {
+                $q->whereIn('slug', $categories);
+            });
+        }
+
+        // Filter by type
+        if ($request->has('type')) {
+            $products_query = $products_query->whereHas('type', function ($q) use ($request) {
+                $q->where('slug', $request->type);
+            });
+        }
+
+        // Filter by shop
+        if ($request->has('shop_id')) {
+            $products_query = $products_query->where('shop_id', $request->shop_id);
+        }
+
+        // Filter by author
+        if ($request->has('author')) {
+            $products_query = $products_query->whereHas('author', function ($q) use ($request) {
+                $q->where('slug', $request->author);
+            });
+        }
+
+        // Filter by manufacturer
+        if ($request->has('manufacturer')) {
+            $products_query = $products_query->whereHas('manufacturer', function ($q) use ($request) {
+                $q->where('slug', $request->manufacturer);
+            });
+        }
+
+        // Search by name or description
+        if ($request->has('search')) {
+            $searchTerm = $request->search;
+            $products_query = $products_query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', "%{$searchTerm}%")
+                  ->orWhere('description', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        // Filter by status
+        if ($request->has('status')) {
+            $products_query = $products_query->where('status', $request->status);
+        }
+
+        // Filter by price range
+        if ($request->has('min_price')) {
+            $products_query = $products_query->where('price', '>=', $request->min_price);
+        }
+        if ($request->has('max_price')) {
+            $products_query = $products_query->where('price', '<=', $request->max_price);
+        }
+
+        // Filter by text (specific field search from query string)
+        if ($request->has('text')) {
+            $searchText = $request->text;
+            $products_query = $products_query->where('name', 'like', "%{$searchText}%");
+        }
+
+        // Ordering
+        if ($request->has('orderBy')) {
+            $order = $request->has('sortedBy') ? $request->sortedBy : 'ASC';
+            $products_query = $products_query->orderBy($request->orderBy, $order);
         }
 
         return $products_query;
