@@ -25,13 +25,42 @@ export const getStaticPaths: GetStaticPaths<ParsedQueryParams> = async ({
   invariant(locales, 'locales is not defined');
   
   try {
-    const { data } = await client.tags.all({ limit: 100 });
-    const paths = data?.flatMap((tag) =>
-      locales?.map((locale) => ({ params: { tagSlug: tag.slug }, locale }))
-    );
+    // Fetch all tags (no language filter)
+    const { data: tags } = await client.tags.all({ limit: 200 });
+    
+    const paths: Array<{ params: { tagSlug: string }; locale: string }> = [];
+
+    // For each tag, check if it has products in each locale
+    for (const tag of tags || []) {
+      // For each locale, check if there are products with this tag
+      for (const locale of locales || []) {
+        try {
+          // Check if tag has products in this locale
+          const products = await client.products.all({
+            tags: tag.slug,
+            language: locale,
+            limit: 1, // We just need to know if any product exists
+          });
+          
+          // Only add path if products exist
+          if (products?.data && products.data.length > 0) {
+            paths.push({
+              params: { tagSlug: tag.slug },
+              locale: locale,
+            });
+          }
+        } catch (error) {
+          // If error, skip this tag-locale combination
+          console.warn(`Skipping tag ${tag.slug} for locale ${locale}:`, error);
+        }
+      }
+    }
+
+    console.log(`[getStaticPaths:tags] Generated ${paths.length} paths for ${tags?.length || 0} tags`);
+
     return {
       paths: paths || [],
-      fallback: 'blocking',
+      fallback: 'blocking', // Enable ISR for new tags
     };
   } catch (error) {
     console.warn('Failed to fetch tags during build:', error);
@@ -52,14 +81,26 @@ export const getStaticProps: GetStaticProps<
   const queryClient = new QueryClient();
   const { tagSlug } = params!; //* we know it's required because of getStaticPaths
   try {
-    const [tag] = await Promise.all([
+    const [tag, products] = await Promise.all([
       client.tags.get({ slug: tagSlug, language: locale }),
-      queryClient.prefetchInfiniteQuery(
-        [API_ENDPOINTS.PRODUCTS, { tags: tagSlug, language: locale }],
-        ({ queryKey }) =>
-          client.products.all(queryKey[1] as ProductQueryOptions)
-      ),
+      client.products.all({ tags: tagSlug, language: locale, limit: 1 }),
     ]);
+
+    // Check if tag has products in this locale
+    if (!products?.data || products.data.length === 0) {
+      console.warn(`[getStaticProps:tags] Tag ${tagSlug} has no products in locale ${locale}`);
+      return {
+        notFound: true,
+      };
+    }
+
+    // Prefetch products for infinite scroll
+    await queryClient.prefetchInfiniteQuery(
+      [API_ENDPOINTS.PRODUCTS, { tags: tagSlug, language: locale }],
+      ({ queryKey }) =>
+        client.products.all(queryKey[1] as ProductQueryOptions)
+    );
+
     return {
       props: {
         tag,
@@ -69,7 +110,8 @@ export const getStaticProps: GetStaticProps<
       revalidate: 60, // In seconds
     };
   } catch (error) {
-    //* if we get here, the product doesn't exist or something else went wrong
+    //* if we get here, the tag doesn't exist or something else went wrong
+    console.error(`[getStaticProps:tags] Error for ${tagSlug} in ${locale}:`, error);
     return {
       notFound: true,
     };
