@@ -106,14 +106,17 @@ class ProductRepository extends BaseRepository
     public function boot()
     {
         try {
-            // Push our custom criteria for multi-language support FIRST
-            // This must run before RequestCriteria to properly handle language filtering
-            $this->pushCriteria(app(MultiLanguageProductCriteria::class));
-            
-            // Then push standard RequestCriteria
+            // Push standard RequestCriteria
             $this->pushCriteria(app(RequestCriteria::class));
+            
+            // Push our custom criteria for multi-language support AFTER
+            // This will override the simple WHERE language = ? with our advanced scope
+            $this->pushCriteria(app(MultiLanguageProductCriteria::class));
         } catch (RepositoryException $e) {
             //
+        } catch (\Exception $e) {
+            // Log any other errors
+            \Log::error('[ProductRepository] Error in boot: ' . $e->getMessage());
         }
     }
 
