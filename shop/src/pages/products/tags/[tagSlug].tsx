@@ -82,7 +82,8 @@ export const getStaticProps: GetStaticProps<
   const { tagSlug } = params!; //* we know it's required because of getStaticPaths
   try {
     const [tag, products] = await Promise.all([
-      client.tags.get({ slug: tagSlug, language: locale }),
+      // client.tags.get({ slug: tagSlug, language: locale }),
+      client.tags.get({ slug: tagSlug }),
       client.products.all({ tags: tagSlug, language: locale, limit: 1 }),
     ]);
 

@@ -72,7 +72,21 @@ class TagController extends CoreController
                 $tag = $this->repository->where('id', $params)->with(['type'])->firstOrFail();
                 return new TagResource($tag);
             }
-            $tag = $this->repository->where('slug', $params)->where('language', $language)->with(['type'])->firstOrFail();
+            try{
+                $tag = $this->repository->where('slug', $params)->where('language', $language)->with(['type'])->firstOrFail();
+                if (!$tag) {
+                // Tags are unique by slug across all languages
+                // So we search without language filter to support multi-language products
+                $tag = $this->repository->where('slug', $params)->with(['type'])->firstOrFail();
+                if (!$tag)
+                    throw new MarvelException(NOT_FOUND);
+                }
+            }catch (\Exception $e) {
+                            
+                // Tags are unique by slug across all languages
+                // So we search without language filter to support multi-language products
+                $tag = $this->repository->where('slug', $params)->with(['type'])->firstOrFail();
+            }
             return new TagResource($tag);
         } catch (MarvelException $th) {
             throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
