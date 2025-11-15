@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Marvel\Http\Controllers\StorageController;
 use Marvel\Http\Controllers\AttachmentController;
+use Marvel\Http\Controllers\TelegramSessionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -51,4 +52,40 @@ Route::prefix('storage')->group(function () {
         Route::post('/auth-url', [StorageController::class, 'googleDriveAuthUrl']);
         Route::post('/exchange-code', [StorageController::class, 'googleDriveExchangeCode']);
     });
+});
+
+/*
+|--------------------------------------------------------------------------
+| Telegram Multi-Session Management Routes
+|--------------------------------------------------------------------------
+|
+| Routes for managing multiple Telegram sessions with load balancing
+|
+*/
+
+Route::prefix('telegram-sessions')->middleware(['auth:sanctum'])->group(function () {
+    
+    // لیست و آمار
+    Route::get('/', [TelegramSessionController::class, 'index']);
+    Route::get('/stats', [TelegramSessionController::class, 'getStats']);
+    
+    // CRUD عملیات
+    Route::post('/', [TelegramSessionController::class, 'store']);
+    Route::get('/{id}', [TelegramSessionController::class, 'show']);
+    Route::put('/{id}', [TelegramSessionController::class, 'update']);
+    Route::delete('/{id}', [TelegramSessionController::class, 'destroy']);
+    
+    // Login Flow
+    Route::post('/{id}/login/start', [TelegramSessionController::class, 'startLogin']);
+    Route::post('/{id}/login/verify', [TelegramSessionController::class, 'verifyCode']);
+    Route::post('/{id}/login/2fa', [TelegramSessionController::class, 'verify2FA']);
+    
+    // مدیریت سشن
+    Route::post('/{id}/test', [TelegramSessionController::class, 'testHealth']);
+    Route::post('/{id}/set-default', [TelegramSessionController::class, 'setDefault']);
+    Route::post('/{id}/toggle-active', [TelegramSessionController::class, 'toggleActive']);
+    Route::post('/{id}/logout', [TelegramSessionController::class, 'logout']);
+    
+    // Health Check
+    Route::post('/check-health', [TelegramSessionController::class, 'checkAllHealth']);
 });

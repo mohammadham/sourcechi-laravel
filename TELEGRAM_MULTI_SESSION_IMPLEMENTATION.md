@@ -404,10 +404,10 @@ For Each Session:
 - [ ] Test Load Balancing Algorithm
 
 ### Phase 3: API ✅
-- [ ] TelegramSessionController
-- [ ] Routes
-- [ ] Health Check Command
-- [ ] Test API Endpoints
+- [x] TelegramSessionController
+- [x] Routes
+- [x] Health Check Command
+- [ ] Test API Endpoints (نیاز به migration و راه‌اندازی backend)
 
 ### Phase 4: Frontend ✅
 - [ ] صفحات مدیریت سشن
@@ -652,6 +652,127 @@ private ?API $telegram = null;  // فقط برای authentication
 
 #### ⏭️ مرحله بعدی:
 Phase 3 - ایجاد API Controller و Routes
+
+---
+
+### [2025-01-15] - Phase 3: API Controller، Routes و Health Check Command ✅
+
+#### ✅ فایل‌های ایجاد شده:
+
+1. **TelegramSessionController.php**
+   - مسیر: `/app/pixer-api/packages/marvel/src/Http/Controllers/TelegramSessionController.php`
+   - تمام 13 endpoint مطابق پلن پیاده‌سازی شد
+
+2. **Routes در storage.php**
+   - مسیر: `/app/pixer-api/packages/marvel/routes/storage.php`
+   - تمام route های `telegram-sessions` با middleware `auth:sanctum`
+
+3. **CheckTelegramSessionsHealth Command**
+   - مسیر: `/app/pixer-api/app/Console/Commands/CheckTelegramSessionsHealth.php`
+   - Command برای چک خودکار سلامت سشن‌ها
+
+4. **Cron Job در Kernel.php**
+   - مسیر: `/app/pixer-api/app/Console/Kernel.php`
+   - اجرای hourly command با `withoutOverlapping()` و `runInBackground()`
+
+#### 📝 Endpoints پیاده‌سازی شده:
+
+**CRUD Operations:**
+- `GET /api/telegram-sessions` - لیست سشن‌ها با فیلتر و مرتب‌سازی
+- `POST /api/telegram-sessions` - افزودن سشن جدید
+- `GET /api/telegram-sessions/{id}` - جزئیات یک سشن
+- `PUT /api/telegram-sessions/{id}` - ویرایش سشن
+- `DELETE /api/telegram-sessions/{id}` - حذف سشن
+
+**Login Flow:**
+- `POST /api/telegram-sessions/{id}/login/start` - شروع فرآیند لاگین (ارسال کد)
+- `POST /api/telegram-sessions/{id}/login/verify` - تایید کد لاگین
+- `POST /api/telegram-sessions/{id}/login/2fa` - تایید رمز دو مرحله‌ای
+
+**Session Management:**
+- `POST /api/telegram-sessions/{id}/test` - تست سلامت یک سشن
+- `POST /api/telegram-sessions/{id}/set-default` - تنظیم به عنوان پیش‌فرض
+- `POST /api/telegram-sessions/{id}/toggle-active` - فعال/غیرفعال کردن
+- `POST /api/telegram-sessions/{id}/logout` - خروج از سشن
+
+**Stats & Health:**
+- `GET /api/telegram-sessions/stats` - آمار کلی همه سشن‌ها
+- `POST /api/telegram-sessions/check-health` - چک سلامت همه سشن‌ها
+
+#### 🔒 ویژگی‌های امنیتی:
+
+1. **Validation کامل:**
+   - اعتبارسنجی تمام ورودی‌ها با Laravel Validator
+   - پیام‌های خطای فارسی و واضح
+
+2. **حفاظت از سشن پیش‌فرض:**
+   - نمی‌توان سشن پیش‌فرض را حذف کرد
+   - نمی‌توان سشن پیش‌فرض را غیرفعال کرد
+   - هشدار هنگام logout از سشن پیش‌فرض
+
+3. **بررسی وضعیت:**
+   - فقط سشن‌های authenticated و سالم می‌توانند پیش‌فرض شوند
+   - به‌روزرسانی خودکار وضعیت بعد از لاگین موفق
+
+4. **Middleware:**
+   - تمام endpoints نیاز به `auth:sanctum` دارند
+
+#### 📊 Artisan Command:
+
+**نام:** `telegram:check-sessions-health`
+
+**ویژگی‌ها:**
+- چک خودکار سلامت همه سشن‌های فعال
+- نمایش نتایج با emoji های رنگی
+- خلاصه آمار (سالم، ناسالم، غیرفعال شده)
+- Logging کامل
+- خروجی کاربرپسند با جدول و جداکننده
+
+**اجرا دستی:**
+```bash
+php artisan telegram:check-sessions-health
+```
+
+**اجرای خودکار:**
+- هر ساعت به صورت خودکار از طریق Laravel Scheduler
+- با `withoutOverlapping()` برای جلوگیری از اجرای همزمان
+- با `runInBackground()` برای اجرا در پس‌زمینه
+
+#### 💡 نکات پیاده‌سازی:
+
+1. **Error Handling جامع:**
+   - Try-catch در تمام متدها
+   - Logging دقیق با file و line number
+   - پیام‌های خطای کاربرپسند به فارسی
+
+2. **Response Format یکسان:**
+   ```json
+   {
+     "success": true/false,
+     "message": "پیام فارسی",
+     "data": {...}
+   }
+   ```
+
+3. **HTTP Status Codes صحیح:**
+   - 200: موفقیت
+   - 201: ایجاد موفق
+   - 400: Bad Request
+   - 404: Not Found
+   - 422: Validation Error
+   - 500: Server Error
+
+4. **Session File Management:**
+   - حذف خودکار فایل session هنگام logout
+   - حذف خودکار فایل session هنگام delete
+   - بررسی وجود فایل session
+
+5. **Auto Update Status:**
+   - وضعیت سشن بعد از لاگین موفق به `authenticated` تغییر می‌کند
+   - `health_score` به 100 تنظیم می‌شود
+
+#### ⏭️ مرحله بعدی:
+Phase 4 - Frontend UI برای Admin Panel
 
 ---
 
