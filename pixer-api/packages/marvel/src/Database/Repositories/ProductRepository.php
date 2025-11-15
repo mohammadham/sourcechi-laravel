@@ -25,6 +25,7 @@ use Spatie\Period\Period;
 use Spatie\Period\Precision;
 use Marvel\Enums\Permission;
 use Marvel\Database\Repositories\Criteria\MultiLanguageProductCriteria;
+use Marvel\Database\Repositories\Criteria\PreLanguageFilterCriteria;
 use Marvel\Events\ProductReviewApproved;
 use Marvel\Events\ProductReviewRejected;
 use Marvel\Events\DigitalProductUpdateEvent;
@@ -106,13 +107,12 @@ class ProductRepository extends BaseRepository
     public function boot()
     {
         try {
-            // Push standard RequestCriteria
-            $this->pushCriteria(app(RequestCriteria::class));
+            // FIRST: Apply forLanguage scope BEFORE any joins
+            // This ensures multi-language products work correctly with relationships like tags
+            $this->pushCriteria(app(PreLanguageFilterCriteria::class));
             
-            // Push our custom criteria for multi-language support AFTER
-            // This will override the simple WHERE language = ? with our advanced scope
-            $this->pushCriteria(app(MultiLanguageProductCriteria::class));
-        } catch (RepositoryException $e) {
+            // THEN: RequestCriteria (will add joins for tags, etc.)
+            $this->pushCriteria(app(RequestCriteria::class));
             //
         } catch (\Exception $e) {
             // Log any other errors

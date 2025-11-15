@@ -166,6 +166,17 @@ class Product extends Model
     }
 
     /**
+     * Scope for whereHas tags - considers multi-language products
+     * This ensures tags filter works with all_languages and available_languages
+     */
+    public function scopeWithTagsForLanguage($query, $tagSlug, $language)
+    {
+        return $query->whereHas('tags', function ($q) use ($tagSlug) {
+            $q->where('slug', $tagSlug);
+        })->forLanguage($language);
+    }
+
+    /**
      * @return HasMany
      */
     public function variation_options(): HasMany
