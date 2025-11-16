@@ -26,7 +26,8 @@ class TelegramStorageDriver extends BaseStorageDriver
      */
     public function __construct(array $config = [])
     {
-        parent::__construct($config);
+        // parent::__construct($config);
+        $this->config = $config;
         $this->sessionManager = new TelegramSessionManager();
     }
     
