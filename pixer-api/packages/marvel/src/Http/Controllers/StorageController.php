@@ -108,8 +108,7 @@ class StorageController extends CoreController
                 'api_hash' => 'required|string',
             ]);
 
-            $driver = new TelegramStorageDriver();
-            $driver->initialize([
+            $driver = new TelegramStorageDriver([
                 'phone' => $request->phone,
                 'api_id' => $request->api_id,
                 'api_hash' => $request->api_hash,
@@ -119,10 +118,16 @@ class StorageController extends CoreController
 
             return response()->json($result);
         } catch (\Exception $e) {
+            Log::error('[StorageController] Telegram auth check failed', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Status check failed: ' . $e->getMessage(),
-            ], 400);
+            ], 500);
         }
     }
     
@@ -138,8 +143,7 @@ class StorageController extends CoreController
                 'api_hash' => 'required|string',
             ]);
 
-            $driver = new TelegramStorageDriver();
-            $driver->initialize([
+            $driver = new TelegramStorageDriver([
                 'phone' => $request->phone,
                 'api_id' => $request->api_id,
                 'api_hash' => $request->api_hash,
@@ -149,10 +153,16 @@ class StorageController extends CoreController
 
             return response()->json($result);
         } catch (\Exception $e) {
+            Log::error('[StorageController] Telegram start auth failed', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Authentication failed: ' . $e->getMessage(),
-            ], 400);
+            ], 500);
         }
     }
 
@@ -172,10 +182,16 @@ class StorageController extends CoreController
 
             return response()->json($result);
         } catch (\Exception $e) {
+            Log::error('[StorageController] Telegram verify code failed', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Verification failed: ' . $e->getMessage(),
-            ], 400);
+            ], 500);
         }
     }
 
@@ -195,10 +211,16 @@ class StorageController extends CoreController
 
             return response()->json($result);
         } catch (\Exception $e) {
+            Log::error('[StorageController] Telegram verify 2FA failed', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => '2FA verification failed: ' . $e->getMessage(),
-            ], 400);
+            ], 500);
         }
     }
 
@@ -215,8 +237,7 @@ class StorageController extends CoreController
                 'phone' => 'required|string',
             ]);
 
-            $driver = new TelegramStorageDriver();
-            $driver->initialize([
+            $driver = new TelegramStorageDriver([
                 'api_id' => $request->api_id,
                 'api_hash' => $request->api_hash,
                 'phone' => $request->phone,
@@ -227,10 +248,16 @@ class StorageController extends CoreController
 
             return response()->json($result);
         } catch (\Exception $e) {
+            Log::error('[StorageController] Telegram test channel failed', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Channel test failed: ' . $e->getMessage(),
-            ], 400);
+            ], 500);
         }
     }
 
@@ -255,6 +282,12 @@ class StorageController extends CoreController
             
             return response()->json($result);
         } catch (\Exception $e) {
+            Log::error('[StorageController] Telegram logout failed', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -285,6 +318,12 @@ class StorageController extends CoreController
                 'output' => trim($output),
             ]);
         } catch (\Exception $e) {
+            Log::error('[StorageController] Clear telegram cache failed', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -331,6 +370,12 @@ class StorageController extends CoreController
                 ],
             ]);
         } catch (\Exception $e) {
+            Log::error('[StorageController] Get cache stats failed', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
