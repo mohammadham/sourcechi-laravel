@@ -771,9 +771,374 @@ php artisan telegram:check-sessions-health
    - وضعیت سشن بعد از لاگین موفق به `authenticated` تغییر می‌کند
    - `health_score` به 100 تنظیم می‌شود
 
+### [2025-01-XX] - Phase 4: Frontend UI (Admin Panel) ✅
+
+#### ✅ فایل‌های ایجاد شده:
+
+**1. Components (5 فایل):**
+
+**`/app/admin/src/components/telegram-sessions/session-health-indicator.tsx`**
+- نمایشگر رنگی برای health score
+- رنگ‌بندی بر اساس امتیاز:
+  * سبز (≥90): سالم
+  * زرد (70-89): خوب
+  * نارنجی (50-69): متوسط
+  * قرمز (<50): ضعیف
+- قابلیت نمایش/عدم نمایش label
+
+**`/app/admin/src/components/telegram-sessions/session-stats.tsx`**
+- Dashboard آمار کلی
+- 5 کارت آمار:
+  * مجموع سشن‌ها
+  * سشن‌های فعال
+  * سشن‌های سالم
+  * دانلودهای فعال
+  * دانلودهای امروز
+- دکمه Refresh با آیکون
+- استفاده از `useTelegramSessionStatsQuery`
+
+**`/app/admin/src/components/telegram-sessions/session-login-modal.tsx`**
+- مودال 3 مرحله‌ای برای login:
+  * مرحله 1: شروع و ارسال کد
+  * مرحله 2: تایید کد لاگین
+  * مرحله 3: تایید 2FA (در صورت نیاز)
+- مدیریت state برای هر مرحله
+- Error handling کامل
+- Loading states
+- استفاده از mutations: `useStartLoginMutation`, `useVerifyCodeMutation`, `useVerify2FAMutation`
+
+**`/app/admin/src/components/telegram-sessions/session-form.tsx`**
+- فرم کامل با React Hook Form
+- فیلدها:
+  * نام سشن (required)
+  * شماره تلفن (required, disabled در edit mode)
+  * API ID (required, number)
+  * API Hash (required)
+  * Channel ID (required)
+  * اولویت (1-10, default: 5)
+  * فعال (checkbox)
+  * پیش‌فرض (checkbox با هشدار)
+- نمایش آمار در edit mode:
+  * وضعیت (authenticated/not_authenticated/error/disabled)
+  * امتیاز سلامت
+  * مجموع دانلودها و آپلودها
+  * دانلودهای فعال
+- دکمه Login برای سشن‌های احراز هویت نشده
+- Validation کامل با پیام‌های خطای فارسی
+
+**`/app/admin/src/components/telegram-sessions/session-list.tsx`**
+- جدول کامل با ستون‌ها:
+  * نام (با Badge برای پیش‌فرض و غیرفعال)
+  * شماره تلفن
+  * وضعیت (Badge رنگی)
+  * امتیاز سلامت (با indicator)
+  * دانلودهای فعال
+  * مجموع دانلودها
+  * اولویت
+  * عملیات
+- Action Buttons برای هر سشن:
+  * 🏥 Test Health
+  * ⭐ Set as Default (فقط برای غیر پیش‌فرض)
+  * 🔴/🟢 Toggle Active (فقط برای غیر پیش‌فرض)
+  * 🚪 Logout (فقط برای authenticated)
+  * ✏️ Edit
+  * 🗑️ Delete
+- Loading states برای هر action
+- استفاده از mutations
+
+**2. Pages (3 فایل):**
+
+**`/app/admin/src/pages/telegram-sessions/index.tsx`**
+- صفحه لیست اصلی
+- نمایش SessionStats در بالا
+- Header با دو دکمه:
+  * Check All Health
+  * Add New Session
+- نمایش SessionList
+- مدیریت refresh برای همه component ها
+- AdminOnly permission
+
+**`/app/admin/src/pages/telegram-sessions/create.tsx`**
+- صفحه افزودن سشن جدید
+- استفاده از SessionForm
+- استفاده از `useCreateTelegramSessionMutation`
+- Redirect به لیست پس از ایجاد موفق
+- AdminOnly permission
+- getStaticProps برای translations
+
+**`/app/admin/src/pages/telegram-sessions/[id]/edit.tsx`**
+- صفحه ویرایش سشن
+- دریافت session با `useTelegramSessionQuery`
+- استفاده از SessionForm با initialValues
+- استفاده از `useUpdateTelegramSessionMutation`
+- Loading و Error handling
+- AdminOnly permission
+- getServerSideProps برای translations
+
+**3. Data Layer:**
+
+**`/app/admin/src/data/telegram-session.ts`**
+
+**Types:**
+- `TelegramSession`: interface کامل با تمام فیلدها
+- `TelegramSessionStats`: interface آمار
+- `TelegramSessionInput`: input برای create/update
+- `TelegramSessionQueryOptions`: options برای filtering
+- `LoginStartResponse`, `LoginVerifyInput`, `Login2FAInput`
+
+**API Client Class:**
+```typescript
+class TelegramSessionClient {
+  - all(params): لیست سشن‌ها با فیلتر
+  - get(id): دریافت یک سشن
+  - create(input): ایجاد سشن
+  - update(id, input): به‌روزرسانی
+  - delete(id): حذف
+  - startLogin(id): شروع login
+  - verifyCode(id, input): تایید کد
+  - verify2FA(id, input): تایید 2FA
+  - testHealth(id): تست سلامت
+  - setDefault(id): تنظیم پیش‌فرض
+  - toggleActive(id): تغییر وضعیت
+  - logout(id): خروج
+  - getStats(): دریافت آمار
+  - checkAllHealth(): چک همه
+}
+```
+
+**React Query Hooks (13 hook):**
+- `useCreateTelegramSessionMutation`
+- `useUpdateTelegramSessionMutation`
+- `useDeleteTelegramSessionMutation`
+- `useTelegramSessionQuery`
+- `useTelegramSessionsQuery`
+- `useTelegramSessionStatsQuery`
+- `useStartLoginMutation`
+- `useVerifyCodeMutation`
+- `useVerify2FAMutation`
+- `useTestHealthMutation`
+- `useSetDefaultMutation`
+- `useToggleActiveMutation`
+- `useLogoutMutation`
+- `useCheckAllHealthMutation`
+
+**4. Configuration Updates:**
+
+**`/app/admin/src/config/routes.ts`**
+```typescript
+telegramSessions: {
+  list: '/telegram-sessions',
+  create: '/telegram-sessions/create',
+  edit: (id: string) => `/telegram-sessions/${id}/edit`,
+}
+```
+
+**`/app/admin/src/data/client/api-endpoints.ts`**
+```typescript
+TELEGRAM_SESSIONS: 'telegram-sessions'
+```
+
+**`/app/admin/src/settings/site.settings.ts`**
+- افزودن menu item در بخش settings:
+```typescript
+{
+  href: Routes.telegramSessions.list,
+  label: 'text-telegram-sessions',
+  icon: 'SettingsIcon',
+}
+```
+
+**5. Translations:**
+
+**`/app/admin/public/locales/fa/common.json`**
+- 82 ترجمه فارسی اضافه شد:
+  * عناوین صفحات و منو
+  * Label های فرم
+  * پیام‌های موفقیت
+  * پیام‌های خطا
+  * توضیحات و راهنماها
+  * وضعیت‌ها و Badge ها
+
+نمونه ترجمه‌ها:
+- `telegram-sessions`: \"مدیریت سشن‌های تلگرام\"
+- `telegram-add-session`: \"افزودن سشن جدید\"
+- `telegram-session-name`: \"نام سشن\"
+- `telegram-authenticated`: \"احراز هویت شده\"
+- `telegram-health-score`: \"امتیاز سلامت\"
+- و 77 ترجمه دیگر...
+
+**6. Environment Setup:**
+
+**`/app/admin/.env`**
+```env
+NEXT_PUBLIC_REST_API_ENDPOINT=\"https://srcchi.top/backend\"
+NEXT_PUBLIC_SHOP_URL=\"http://localhost:3001\"
+APPLICATION_MODE=production
+NEXT_PUBLIC_DEFAULT_LANGUAGE=fa
+NEXT_PUBLIC_ENABLE_MULTI_LANG=true
+NEXT_PUBLIC_AVAILABLE_LANGUAGES=en,de,ar,fa
+```
+
+#### 📝 ویژگی‌های پیاده‌سازی شده:
+
+**UI/UX:**
+- ✅ طراحی Responsive با Tailwind CSS
+- ✅ رنگ‌بندی معنادار برای وضعیت‌ها
+- ✅ Loading states برای تمام عملیات
+- ✅ Error handling جامع
+- ✅ Toast notifications برای feedback
+- ✅ Modal برای login flow
+- ✅ Badge ها برای نمایش وضعیت
+- ✅ Icon های معنادار (emoji)
+
+**Functionality:**
+- ✅ CRUD کامل
+- ✅ Real-time stats با قابلیت refresh
+- ✅ Multi-step login (3 مرحله)
+- ✅ Test health برای هر سشن
+- ✅ Check all health برای همه
+- ✅ Set default با validation
+- ✅ Toggle active/inactive
+- ✅ Logout functionality
+- ✅ Form validation کامل
+
+**Performance:**
+- ✅ React Query برای caching
+- ✅ Optimistic updates
+- ✅ Cache invalidation مناسب
+- ✅ Code splitting با Next.js
+
+**Security:**
+- ✅ AdminOnly permissions
+- ✅ Authentication required
+- ✅ Input validation
+- ✅ CSRF protection (Sanctum)
+
+#### 🔧 فرآیند Build و Deploy:
+
+**1. Dependencies:**
+```bash
+cd /app/admin
+yarn install
+# Completed in 48.83s
+```
+
+**2. TypeScript Check:**
+```bash
+yarn tsc --noEmit
+# ✅ No errors
+```
+
+**Fixes Applied:**
+- Fixed `name` prop missing in Input components
+- Fixed TypeScript type for API response handling
+- Updated HttpClient import
+
+**3. Build:**
+```bash
+yarn build
+# ✅ Completed in 114.53s
+```
+
+**Build Output:**
+```
+● /telegram-sessions                    5.79 kB    366 kB
+λ /telegram-sessions/[id]/edit          859 B      373 kB
+● /telegram-sessions/create             706 B      373 kB
+```
+
+**4. Supervisor Setup:**
+```bash
+# Copy config
+sudo cp /app/supervisor/conf.d/admin.conf /etc/supervisor/conf.d/
+
+# Update supervisor
+sudo supervisorctl reread
+sudo supervisorctl update
+
+# Status
+admin    RUNNING   pid 2170
+```
+
+**5. Running:**
+- Port: 3002
+- URL: http://localhost:3002
+- Logs: /var/log/supervisor/admin.out.log
+
+#### 📊 آمار فایل‌های ایجاد شده:
+
+| نوع فایل | تعداد | حجم تقریبی |
+|---------|------|-----------|
+| Components | 5 | ~700 lines |
+| Pages | 3 | ~200 lines |
+| Data/API | 1 | ~350 lines |
+| Config Updates | 3 | ~20 lines |
+| Translations | 1 | 82 keys |
+| Environment | 1 | - |
+| **Total** | **14** | **~1270 lines** |
+
+#### ✅ Checklist تکمیل Phase 4:
+
+- [x] **Frontend Structure**
+  - [x] Components (5 files)
+  - [x] Pages (3 files)
+  - [x] Routing
+  - [x] Layouts
+
+- [x] **Data Layer**
+  - [x] API Client
+  - [x] React Query Hooks (13 hooks)
+  - [x] Type Definitions
+  - [x] Error Handling
+
+- [x] **UI Components**
+  - [x] Session List (Table)
+  - [x] Session Form (Create/Edit)
+  - [x] Stats Dashboard
+  - [x] Health Indicator
+  - [x] Login Modal (3 steps)
+
+- [x] **Features**
+  - [x] CRUD Operations
+  - [x] Login Flow
+  - [x] Health Check
+  - [x] Stats Display
+  - [x] Real-time Updates
+
+- [x] **Configuration**
+  - [x] Routes
+  - [x] API Endpoints
+  - [x] Menu Items
+  - [x] Translations (82 keys)
+  - [x] Environment
+
+- [x] **Build & Deploy**
+  - [x] Dependencies Install
+  - [x] TypeScript Validation
+  - [x] Production Build
+  - [x] Supervisor Config
+  - [x] Service Running
+
+#### 🎯 نتیجه:
+
+✅ **Phase 4 با موفقیت تکمیل شد!**
+
+- Frontend کامل و functional
+- Build بدون خطا
+- Admin Panel در حال اجرا روی port 3002
+- آماده برای تست و استفاده
+
 #### ⏭️ مرحله بعدی:
-Phase 4 - Frontend UI برای Admin Panel
+Phase 5 - Testing & Deployment
+
+**وضعیت کلی پروژه:**
+- ✅ Phase 1: Database & Models - تکمیل
+- ✅ Phase 2: Core Logic - تکمیل
+- ✅ Phase 3: API & Commands - تکمیل
+- ✅ Phase 4: Frontend UI - تکمیل
+- ⏳ Phase 5: Testing & Deployment - باقیمانده
 
 ---
 
-_این فایل در طول پیاده‌سازی به‌روزرسانی خواهد شد_
+_این فایل در طول پیاده‌سازی به‌روزرسانی خواهد شد_"
+Observation: Edit was successful.
