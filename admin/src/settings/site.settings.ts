@@ -407,6 +407,11 @@ export const siteSettings = {
               },
             ],
           },
+          {
+            href: Routes.telegramSessions.list,
+            label: 'text-telegram-sessions',
+            icon: 'SettingsIcon',
+          },
         ],
       },
     },

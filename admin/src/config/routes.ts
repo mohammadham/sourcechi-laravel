@@ -170,6 +170,11 @@ export const Routes = {
     ...routesFactory('/shop-transfer'),
   },
   ownerDashboardShopTransferRequest: '/shop-transfer/vendor',
+  telegramSessions: {
+    list: '/telegram-sessions',
+    create: '/telegram-sessions/create',
+    edit: (id: string) => `/telegram-sessions/${id}/edit`,
+  },
 };
 
 function routesFactory(endpoint: string) {

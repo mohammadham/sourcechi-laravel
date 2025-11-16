@@ -102,4 +102,5 @@ export const API_ENDPOINTS = {
   TRANSFER_SHOP_OWNERSHIP: 'transfer-shop-ownership',
   OWNERSHIP_TRANSFER: 'ownership-transfer',
   ADVERTISEMENTS: 'advertisements',
+  TELEGRAM_SESSIONS: 'telegram-sessions',
 };
